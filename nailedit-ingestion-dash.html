@@ -1,0 +1,1027 @@
+<!doctype html>
+<html>
+    <head>
+        <title>NailedIT Ingestion API Dashboard</title>
+        <meta charset="UTF-8" />
+        <meta http-equiv="Access-Control-Allow-Origin" content="*" />
+        <!-- Removed preconnect link as URL is now dynamic -->
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                /* 4. Page background color */
+                background-color: #f8ece4;
+            }
+            #app-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                /* 4. Darker backdrop shadow */
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            }
+            h1 {
+                color: #333;
+                text-align: center;
+                border-bottom: 1px solid #eee;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+            h2 {
+                color: #333;
+                margin: 0;
+                font-size: 1.1em;
+                padding: 0;
+            }
+
+            /* --- Top Controls Layout --- */
+            #top-controls {
+                display: flex;
+                gap: 20px; /* Space between columns */
+                flex-wrap: wrap; /* Allow wrapping */
+                margin-bottom: 20px;
+                align-items: flex-start; /* Align items to the top */
+            }
+            #top-controls > div {
+                flex: 1 1 calc(50% - 10px); /* Basis 50% minus half gap */
+                min-width: 300px; /* Prevent getting too narrow */
+            }
+            /* --- End Top Controls Layout --- */
+
+            summary {
+                cursor: pointer;
+                font-weight: bold;
+                padding: 10px;
+                background-color: #f9f9f9;
+                border: 1px solid #eee;
+                border-radius: 4px;
+                margin-bottom: 10px;
+                list-style: none;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            summary::before {
+                content: "►";
+                font-size: 0.8em;
+                line-height: 1;
+            }
+            details[open] summary::before {
+                content: "▼";
+            }
+
+            details > div {
+                padding: 15px;
+                border: 1px solid #eee;
+                border-top: none;
+                border-radius: 0 0 4px 4px;
+                margin-top: -11px;
+                margin-bottom: 20px;
+            }
+
+            #main-content {
+                display: flex;
+                gap: 20px;
+                flex-wrap: wrap;
+            }
+            #main-content > details {
+                flex: 1 1 calc(50% - 10px);
+                min-width: 300px;
+                box-sizing: border-box;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+                color: #555;
+            }
+            input[type="text"],
+            input[type="password"],
+            input[type="url"],
+            select,
+            button {
+                padding: 8px;
+                margin-bottom: 10px;
+                border: 1px solid #ccc;
+                border-radius: 3px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            button {
+                /* 4. Button color */
+                background-color: #6700d4;
+                color: white;
+                cursor: pointer;
+                border: none;
+                width: auto;
+                padding: 10px 15px;
+                margin-right: 5px;
+                margin-top: 5px;
+                width: 100%;
+            }
+            button:hover:not(:disabled) {
+                /* Slightly darker hover for the new color */
+                background-color: #5200a3;
+            }
+            button:disabled {
+                background-color: #ccc;
+                cursor: not-allowed;
+            }
+            .form-group {
+                margin-bottom: 15px;
+            }
+            .form-group small {
+                /* Style for the small helper text */
+                display: block;
+                font-size: 0.85em;
+                color: #666;
+                margin-top: -5px; /* Adjust spacing */
+                margin-bottom: 10px; /* Add space below */
+            }
+            .optional-label {
+                font-weight: normal;
+                font-size: 0.9em;
+                color: #777;
+            }
+            hr {
+                border: none;
+                border-top: 1px solid #eee;
+                margin: 20px 0;
+            }
+
+            #status-indicator {
+                position: fixed;
+                top: 15px;
+                right: 15px;
+                padding: 8px 15px;
+                background-color: rgba(0, 0, 0, 0.7);
+                color: white;
+                border-radius: 5px;
+                z-index: 1000;
+                display: none;
+                font-size: 1.1em;
+                transition: opacity 0.3s ease-in-out;
+                opacity: 0;
+            }
+            #status-indicator.visible {
+                display: block;
+                opacity: 1;
+            }
+            #status-indicator.error {
+                background-color: rgba(220, 53, 69, 0.8);
+            }
+            /* Ensure buttons inside the bucket selection area are also full width */
+            #bucket-selection-controls button {
+                width: 100%;
+                margin-top: 5px;
+                margin-bottom: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="app-container">
+            <h1>NailedIT Ingestion API Dashboard</h1>
+
+            <!-- 1. Top Controls: API Base URL, Key and Bucket Selection -->
+            <div id="top-controls">
+                <div class="form-group">
+                    <label for="apiKeyInput">API Key:</label>
+                    <input type="text" id="apiKeyInput" placeholder="Enter your X-API-Key" value="" />
+                    <small>This key will be used for all API requests.</small>
+
+                    <!-- ADDED: API Base URL Input -->
+                    <label for="apiBaseUrlInput" style="margin-top: 10px">API Base URL:</label>
+                    <input
+                        type="url"
+                        id="apiBaseUrlInput"
+                        placeholder="Enter the API base URL"
+                        value=""
+                    />
+                    <small>The root URL of the NailedIT API.</small>
+                </div>
+                <div class="form-group" id="bucket-selection-controls">
+                    <label for="bucketConnectionSelect">Select a Bucket Connection:</label>
+                    <select id="bucketConnectionSelect" disabled>
+                        <option value="">-- Enter API Key & Base URL First --</option>
+                    </select>
+                    <!-- 2. Refresh Button (Moved Here) -->
+                    <button id="refreshConnectionsBtn" disabled>Refresh Connections</button>
+                    <!-- 2. Remove Button (Moved Here) -->
+                    <button id="removeConnectionBtn" disabled>Remove Selected Connection</button>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- Main Content Area (Two Columns for collapsible sections) -->
+            <div id="main-content">
+                <!-- Bucket Registration Section (Collapsible) -->
+                <details>
+                    <!-- 2. Renamed Summary -->
+                    <summary><h2>Bucket Connection Registration</h2></summary>
+                    <div>
+                        <!-- Bucket Registration Form -->
+                        <div class="form-group">
+                            <h3>Register New Connection</h3>
+                            <label for="regBucketName">Bucket Name:</label>
+                            <input
+                                type="text"
+                                id="regBucketName"
+                                placeholder="e.g., my-nail-images"
+                                required
+                            />
+
+                            <label for="regAccessKeyId">AWS Access Key ID:</label>
+                            <input
+                                type="text"
+                                id="regAccessKeyId"
+                                placeholder="Your AWS Access Key ID"
+                                required
+                            />
+
+                            <label for="regSecretAccessKey">AWS Secret Access Key:</label>
+                            <input
+                                type="password"
+                                id="regSecretAccessKey"
+                                placeholder="Your AWS Secret Access Key"
+                                required
+                            />
+
+                            <label for="regRegion">Region:</label>
+                            <input
+                                type="text"
+                                id="regRegion"
+                                placeholder="e.g., us-west-1"
+                                value="us-west-1"
+                                required
+                            />
+
+                            <label for="regProvider">Provider:</label>
+                            <input
+                                type="text"
+                                id="regProvider"
+                                value="aws"
+                                placeholder="e.g., aws, wasabi, backblaze"
+                                required
+                            />
+
+                            <label for="regEndpointUrl"
+                                >Endpoint URL
+                                <span class="optional-label"
+                                    >(Optional - for non-AWS S3 compatible)</span
+                                >:</label
+                            >
+                            <input
+                                type="url"
+                                id="regEndpointUrl"
+                                placeholder="e.g., https://s3.us-west-000.backblazeb2.com"
+                            />
+
+                            <button id="registerConnectionBtn">Register Connection</button>
+                        </div>
+                        <!-- 2. Removed Manage Registered Buckets sub-section -->
+                    </div>
+                </details>
+
+                <!-- Bucket Ingestion Section (Collapsible) -->
+                <details>
+                    <summary><h2>Bucket Data Ingestion</h2></summary>
+                    <div>
+                        <p>Select a registered bucket connection above to start ingestion.</p>
+                        <div class="form-group">
+                            <label for="ingestCallbackUrl">Callback URL:</label>
+                            <input
+                                type="url"
+                                id="ingestCallbackUrl"
+                                placeholder="https://your-webhook-endpoint.com/notify"
+                                value="https://webhook.site/"
+                                required
+                            />
+                            <small>The API will POST status updates to this URL.</small>
+                        </div>
+                        <button id="startIngestionBtn" disabled>
+                            Start Ingestion for Selected Connection
+                        </button>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Status Indicator Element -->
+        <div id="status-indicator"></div>
+
+        <script>
+            /**
+             * =========================
+             * CONFIGURATION CONSTANTS
+             * =========================
+             */
+            // const API_BASE_URL = "https://aretrace--nailedit-app-v0-api-service-dev.modal.run"; // Now read from input
+            const API_KEY_HEADER = "X-API-Key";
+            const STATUS_DISPLAY_DURATION = 4000;
+            const ERROR_DISPLAY_DURATION = 6000;
+            // 3. List of input IDs to persist
+            const PERSISTENT_INPUT_IDS = [
+                "apiBaseUrlInput", // Added Base URL input ID
+                "apiKeyInput",
+                "regBucketName",
+                "regAccessKeyId",
+                "regSecretAccessKey",
+                "regRegion",
+                "regProvider",
+                "regEndpointUrl",
+                "ingestCallbackUrl",
+            ];
+
+            /**
+             * =========================
+             * DOM ELEMENT REFERENCES
+             * =========================
+             */
+            const apiBaseUrlInput = document.getElementById("apiBaseUrlInput"); // Added Base URL input reference
+            const apiKeyInput = document.getElementById("apiKeyInput");
+            // Connection Selection/Management Elements (Top Area)
+            const bucketConnectionSelect = document.getElementById("bucketConnectionSelect");
+            const refreshConnectionsBtn = document.getElementById("refreshConnectionsBtn");
+            const removeConnectionBtn = document.getElementById("removeConnectionBtn"); // Renamed from deleteBucketBtn
+            // Registration Elements
+            const regBucketNameInput = document.getElementById("regBucketName");
+            const regAccessKeyIdInput = document.getElementById("regAccessKeyId");
+            const regSecretAccessKeyInput = document.getElementById("regSecretAccessKey");
+            const regRegionInput = document.getElementById("regRegion");
+            const regProviderInput = document.getElementById("regProvider");
+            const regEndpointUrlInput = document.getElementById("regEndpointUrl");
+            const registerConnectionBtn = document.getElementById("registerConnectionBtn"); // Renamed
+            // Ingestion Elements
+            const ingestCallbackUrlInput = document.getElementById("ingestCallbackUrl");
+            const startIngestionBtn = document.getElementById("startIngestionBtn");
+            // Status Indicator Element
+            const statusIndicator = document.getElementById("status-indicator");
+            let statusTimeoutId = null;
+
+            /**
+             * =========================
+             * HELPER FUNCTIONS
+             * =========================
+             */
+
+            /**
+             * Shows a status message in the corner of the screen.
+             */
+            function showStatusIndicator(
+                emoji,
+                message,
+                isError = false,
+                duration = STATUS_DISPLAY_DURATION,
+            ) {
+                if (statusTimeoutId) clearTimeout(statusTimeoutId);
+                const displayDuration = isError ? ERROR_DISPLAY_DURATION : duration;
+
+                statusIndicator.innerHTML = `${emoji} ${message}`;
+                statusIndicator.classList.toggle("error", isError);
+                statusIndicator.classList.add("visible");
+
+                statusTimeoutId = setTimeout(() => {
+                    statusIndicator.classList.remove("visible");
+                    setTimeout(() => {
+                        if (!statusIndicator.classList.contains("visible")) {
+                            statusIndicator.innerHTML = "";
+                            statusIndicator.classList.remove("error");
+                        }
+                    }, 300);
+                    statusTimeoutId = null;
+                }, displayDuration);
+            }
+
+            /**
+             * Retrieves the API key from the input field. Shows status indicator if missing.
+             */
+            function getApiKey() {
+                const apiKey = apiKeyInput.value.trim();
+                if (!apiKey) {
+                    showStatusIndicator("⚠️", "API Key is required.", false, ERROR_DISPLAY_DURATION);
+                    apiKeyInput.focus();
+                    return null;
+                }
+                return apiKey;
+            }
+
+            /**
+             * Retrieves the API Base URL from the input field. Shows status indicator if missing or invalid.
+             */
+            function getApiBaseUrl() {
+                const baseUrl = apiBaseUrlInput.value.trim();
+                if (!baseUrl) {
+                    showStatusIndicator(
+                        "⚠️",
+                        "API Base URL is required.",
+                        false,
+                        ERROR_DISPLAY_DURATION,
+                    );
+                    apiBaseUrlInput.focus();
+                    return null;
+                }
+                try {
+                    // Basic validation: check if it parses as a URL and has a protocol
+                    const parsedUrl = new URL(baseUrl);
+                    if (!parsedUrl.protocol || !parsedUrl.host) {
+                        throw new Error("Incomplete URL");
+                    }
+                } catch (_) {
+                    showStatusIndicator(
+                        "⚠️",
+                        "API Base URL is not a valid URL (e.g., https://example.com).",
+                        false,
+                        ERROR_DISPLAY_DURATION,
+                    );
+                    apiBaseUrlInput.focus();
+                    return null;
+                }
+                // Return URL without trailing slash for consistency
+                return baseUrl.replace(/\/$/, "");
+            }
+
+            /**
+             * Handles API errors by logging and displaying a status message.
+             */
+            async function handleApiError(error, contextMessage) {
+                console.error(`${contextMessage}:`, error);
+                let displayMessage = `${contextMessage}. Check console for details.`;
+
+                if (error instanceof Response) {
+                    try {
+                        const errorData = await error.json();
+                        if (errorData.error && errorData.error.message) {
+                            displayMessage = `${contextMessage}: ${errorData.error.message} (Status: ${error.status})`;
+                        } else if (error.statusText) {
+                            displayMessage = `${contextMessage}: ${error.status} ${error.statusText}.`;
+                        } else {
+                            displayMessage = `${contextMessage}: Received status ${error.status}.`;
+                        }
+                    } catch (parseError) {
+                        console.warn("Failed to parse error response body:", parseError);
+                        displayMessage = `${contextMessage}: Received status ${error.status}. Failed to parse details.`;
+                    }
+                } else if (error instanceof Error) {
+                    displayMessage = `${contextMessage}: ${error.message}`;
+                }
+
+                showStatusIndicator("❌", displayMessage, true, ERROR_DISPLAY_DURATION);
+            }
+
+            /**
+             * A generic wrapper for fetch API calls to the backend.
+             * Reads Base URL and API Key from inputs.
+             */
+            async function fetchApi(endpoint, options = {}) {
+                const apiKey = getApiKey();
+                const baseUrl = getApiBaseUrl();
+
+                if (!apiKey || !baseUrl) {
+                    // Error messages are shown by getApiKey/getApiBaseUrl
+                    throw new Error("API Key or Base URL is missing or invalid."); // Prevent fetch
+                }
+
+                const url = `${baseUrl}${endpoint}`; // Base URL already trimmed of trailing slash
+                const headers = {
+                    ...(options.headers || {}),
+                    [API_KEY_HEADER]: apiKey,
+                    Accept: "application/json",
+                };
+
+                if (
+                    !(options.body instanceof FormData) &&
+                    options.body != null &&
+                    !headers["Content-Type"]
+                ) {
+                    headers["Content-Type"] = "application/json";
+                }
+
+                const fetchOptions = {
+                    ...options,
+                    headers,
+                    mode: "cors",
+                    cache: "no-cache",
+                };
+
+                if (
+                    typeof fetchOptions.body === "object" &&
+                    !(fetchOptions.body instanceof FormData) &&
+                    fetchOptions.body !== null
+                ) {
+                    fetchOptions.body = JSON.stringify(fetchOptions.body);
+                }
+
+                document.body.style.cursor = "wait";
+                // Disable refresh button during any API call
+                refreshConnectionsBtn.disabled = true;
+
+                try {
+                    const response = await fetch(url, fetchOptions);
+
+                    if (!response.ok) {
+                        throw response; // Let handleApiError process the response
+                    }
+
+                    // Handle 204 No Content specifically
+                    if (response.status === 204) {
+                        return response; // Return the response object itself for status check
+                    }
+
+                    // Handle potential empty body for other success statuses (e.g., 200 OK with no body)
+                    const contentType = response.headers.get("content-type");
+                    const contentLength = response.headers.get("content-length");
+
+                    if (
+                        contentLength === "0" ||
+                        !contentType ||
+                        !contentType.includes("application/json")
+                    ) {
+                        // If no content or not JSON, attempt to read text but prefer returning response if successful
+                        console.warn(
+                            "Received non-JSON or empty response from API:",
+                            response.status,
+                            response.statusText,
+                        );
+                        try {
+                            const text = await response.text(); // Try reading text for debugging
+                            if (text) console.warn("Response text:", text);
+                        } catch (e) {
+                            /* Ignore read error if already handled */
+                        }
+                        // Still return the response object if the status code was OK (2xx)
+                        if (response.ok) return response;
+                        // If it wasn't ok, it should have been thrown already, but as fallback:
+                        throw new Error(
+                            `API returned status ${response.status} with non-JSON response.`,
+                        );
+                    }
+
+                    // If JSON is expected and seems present, parse it
+                    try {
+                        return await response.json();
+                    } catch (e) {
+                        console.error("Failed to parse JSON response:", e, response);
+                        throw new Error(
+                            "API returned invalid JSON response despite Content-Type header.",
+                        );
+                    }
+                } finally {
+                    document.body.style.cursor = "default";
+                    // Re-enable refresh button after API call finishes (respecting other conditions)
+                    updateButtonStates();
+                }
+            }
+
+            /**
+             * Updates the enabled/disabled state of buttons based on connection selection, API key, and Base URL.
+             */
+            function updateButtonStates() {
+                const connectionSelected = bucketConnectionSelect.value !== "";
+                const apiKeyPresent = apiKeyInput.value.trim() !== "";
+                const baseUrlPresent = apiBaseUrlInput.value.trim() !== ""; // Check if Base URL is present
+
+                // Enable remove/start only if a connection is selected AND key/URL are present
+                removeConnectionBtn.disabled = !(
+                    connectionSelected &&
+                    apiKeyPresent &&
+                    baseUrlPresent
+                );
+                startIngestionBtn.disabled = !(connectionSelected && apiKeyPresent && baseUrlPresent);
+
+                // The select dropdown is disabled if there's no API key/Base URL or no options (besides placeholder)
+                bucketConnectionSelect.disabled =
+                    !apiKeyPresent || !baseUrlPresent || bucketConnectionSelect.options.length <= 1;
+
+                // Refresh button is enabled only if API key and Base URL are present, and not during API calls
+                refreshConnectionsBtn.disabled =
+                    !apiKeyPresent || !baseUrlPresent || document.body.style.cursor === "wait";
+
+                // Registration button should always be enabled (unless actively processing)
+                // Assuming registerConnectionBtn state is managed within its own function
+            }
+
+            /**
+             * =========================
+             * LOCAL STORAGE FUNCTIONS (Persistence - #3)
+             * =========================
+             */
+
+            /** Saves an input's value to localStorage */
+            function saveSetting(inputId, value) {
+                try {
+                    localStorage.setItem(inputId, value);
+                } catch (e) {
+                    console.warn("Could not save setting to localStorage:", e);
+                }
+            }
+
+            /** Loads persisted settings from localStorage into input fields */
+            function loadSettings() {
+                PERSISTENT_INPUT_IDS.forEach((id) => {
+                    const savedValue = localStorage.getItem(id);
+                    const inputElement = document.getElementById(id);
+                    if (savedValue !== null && inputElement) {
+                        inputElement.value = savedValue;
+                    }
+                });
+
+                // Special handling for API key & Base URL: trigger list if both exist
+                const savedApiKey = localStorage.getItem("apiKeyInput");
+                const savedBaseUrl = localStorage.getItem("apiBaseUrlInput");
+                if (savedApiKey && savedBaseUrl) {
+                    console.log(
+                        "API Key & Base URL found in storage, attempting to list connections...",
+                    );
+                    listBucketConnections(false); // false = don't show indicator just for loading
+                } else {
+                    updateButtonStates(); // Ensure buttons are correctly disabled if key/URL are missing
+                }
+            }
+
+            /** Attaches event listeners to save inputs on change */
+            function setupPersistenceListeners() {
+                PERSISTENT_INPUT_IDS.forEach((id) => {
+                    const inputElement = document.getElementById(id);
+                    if (inputElement) {
+                        inputElement.addEventListener("change", (event) => {
+                            saveSetting(event.target.id, event.target.value);
+                            // If API key or Base URL changed, attempt to refresh bucket list
+                            if (
+                                event.target.id === "apiKeyInput" ||
+                                event.target.id === "apiBaseUrlInput"
+                            ) {
+                                listBucketConnections(false); // Refresh quietly
+                            }
+                        });
+                    }
+                });
+            }
+
+            /**
+             * =========================
+             * API INTERACTION FUNCTIONS (Updated Terminology - #2)
+             * =========================
+             */
+
+            /**
+             * Registers a new S3 bucket connection via the API.
+             */
+            async function registerConnection() {
+                // API Key and Base URL are checked within fetchApi
+                const bucketName = regBucketNameInput.value.trim();
+                const accessKeyId = regAccessKeyIdInput.value.trim();
+                const secretAccessKey = regSecretAccessKeyInput.value.trim();
+                const region = regRegionInput.value.trim();
+                const provider = regProviderInput.value.trim();
+                const endpointUrl = regEndpointUrlInput.value.trim() || null;
+
+                if (!bucketName || !accessKeyId || !secretAccessKey || !region || !provider) {
+                    showStatusIndicator(
+                        "⚠️",
+                        "Please fill in all required connection registration fields.",
+                        false,
+                        ERROR_DISPLAY_DURATION,
+                    );
+                    return;
+                }
+
+                const body = {
+                    aws_access_key_id: accessKeyId,
+                    aws_secret_access_key: secretAccessKey,
+                    region: region,
+                    provider: provider,
+                    ...(endpointUrl && { endpoint_url: endpointUrl }),
+                };
+
+                registerConnectionBtn.disabled = true;
+
+                try {
+                    const endpoint = `/buckets/${encodeURIComponent(bucketName)}`;
+                    // fetchApi now implicitly handles key/base URL
+                    const result = await fetchApi(endpoint, { method: "POST", body });
+
+                    if (result && result.data && result.data.name) {
+                        showStatusIndicator(
+                            "✅",
+                            `Connection for '${result.data.name}' registered. Refreshing list...`,
+                        );
+                        await listBucketConnections(false);
+                        // Clear sensitive fields after successful registration? Optional.
+                        // regAccessKeyIdInput.value = ''; saveSetting('regAccessKeyId', '');
+                        // regSecretAccessKeyInput.value = ''; saveSetting('regSecretAccessKey', '');
+                    } else {
+                        // Handle cases where fetchApi might return the raw response on success (e.g., 201 Created with location header but no body)
+                        // Check response status code if result is not the expected JSON structure
+                        if (result instanceof Response && result.ok) {
+                            showStatusIndicator(
+                                "✅",
+                                `Connection for '${bucketName}' registered (status ${result.status}). Refreshing list...`,
+                            );
+                            await listBucketConnections(false);
+                        } else {
+                            throw new Error("Unexpected response format after registration.");
+                        }
+                    }
+                } catch (error) {
+                    handleApiError(error, "Failed to register connection");
+                } finally {
+                    registerConnectionBtn.disabled = false;
+                }
+            }
+
+            /**
+             * Fetches the list of registered bucket connections and populates the dropdown.
+             * @param {boolean} [showIndicator=true] - Whether to show a success/info indicator.
+             */
+            async function listBucketConnections(showIndicator = true) {
+                const apiKey = apiKeyInput.value.trim(); // Get key directly for checks
+                const baseUrl = apiBaseUrlInput.value.trim(); // Get base URL for checks
+
+                if (!apiKey || !baseUrl) {
+                    // Update UI if no API key or base URL
+                    bucketConnectionSelect.innerHTML =
+                        '<option value="">-- Enter API Key & Base URL --</option>';
+                    if (
+                        showIndicator &&
+                        (document.getElementById("apiKeyInput") === document.activeElement ||
+                            document.getElementById("apiBaseUrlInput") === document.activeElement)
+                    ) {
+                        // Only show indicator if user likely intended to list
+                        showStatusIndicator(
+                            "⚠️",
+                            "API Key and Base URL are required to list connections.", // Updated message
+                            false,
+                            ERROR_DISPLAY_DURATION,
+                        );
+                    }
+                    updateButtonStates(); // Ensure buttons/select reflect missing key/URL
+                    return;
+                }
+
+                // Indicate loading via cursor (handled by fetchApi)
+                // Disable select during load
+                bucketConnectionSelect.innerHTML = '<option value="">-- Loading... --</option>';
+                updateButtonStates(); // Update general button states (refresh will be disabled by fetchApi)
+
+                try {
+                    // fetchApi now implicitly handles key/base URL
+                    const result = await fetchApi("/buckets", { method: "GET" });
+
+                    if (result && result.data && Array.isArray(result.data.results)) {
+                        bucketConnectionSelect.innerHTML =
+                            '<option value="">-- Select a Connection --</option>'; // Updated placeholder
+                        if (result.data.results.length === 0) {
+                            bucketConnectionSelect.innerHTML =
+                                '<option value="">-- No connections registered --</option>'; // Updated placeholder
+                            if (showIndicator)
+                                showStatusIndicator(
+                                    "ℹ️",
+                                    "No connections registered for this API key.",
+                                );
+                        } else {
+                            result.data.results.forEach((bucketName) => {
+                                const option = document.createElement("option");
+                                option.value = bucketName;
+                                option.textContent = bucketName; // Display the bucket name
+                                bucketConnectionSelect.appendChild(option);
+                            });
+                            if (showIndicator)
+                                showStatusIndicator(
+                                    "✅",
+                                    `Found ${result.data.results.length} connection(s).`,
+                                );
+                        }
+                    } else {
+                        // Handle case where API might return empty success (e.g., 200 OK with empty array/no data field)
+                        if (result instanceof Response && result.ok) {
+                            bucketConnectionSelect.innerHTML =
+                                '<option value="">-- No connections registered --</option>';
+                            if (showIndicator) showStatusIndicator("ℹ️", "No connections found.");
+                        } else {
+                            bucketConnectionSelect.innerHTML =
+                                '<option value="">-- Error: Invalid response --</option>';
+                            if (showIndicator)
+                                showStatusIndicator(
+                                    "⚠️",
+                                    "Received invalid data listing connections.",
+                                    false,
+                                    ERROR_DISPLAY_DURATION,
+                                );
+                            console.warn(
+                                "Unexpected response format when listing connections:",
+                                result,
+                            );
+                        }
+                    }
+                } catch (error) {
+                    // Handle 404 specifically as "no connections" or "bad key/url"
+                    if (
+                        error instanceof Response &&
+                        (error.status === 404 || error.status === 401 || error.status === 403)
+                    ) {
+                        bucketConnectionSelect.innerHTML =
+                            '<option value="">-- No connections found / Invalid Credentials --</option>';
+                        if (showIndicator)
+                            showStatusIndicator(
+                                "ℹ️",
+                                "No connections found (or API key/URL invalid).",
+                            );
+                    } else {
+                        // Handle other errors (including network errors from fetchApi check)
+                        handleApiError(error, "Failed to list connections");
+                        bucketConnectionSelect.innerHTML =
+                            '<option value="">-- Error loading connections --</option>';
+                    }
+                } finally {
+                    updateButtonStates(); // Re-evaluate all button/select states
+                }
+            }
+
+            /**
+             * Removes the currently selected bucket connection registration.
+             */
+            async function removeConnection() {
+                // API Key and Base URL checked by fetchApi
+                const selectedBucket = bucketConnectionSelect.value;
+                if (!selectedBucket) {
+                    showStatusIndicator(
+                        "⚠️",
+                        "Please select a connection to remove.",
+                        false,
+                        ERROR_DISPLAY_DURATION,
+                    );
+                    return;
+                }
+
+                if (
+                    !confirm(
+                        `Are you sure you want to remove the connection registration for bucket '${selectedBucket}'? This action cannot be undone.`,
+                    )
+                ) {
+                    return;
+                }
+
+                // Indicate loading via cursor (handled by fetchApi)
+                // Disable buttons during removal
+                removeConnectionBtn.disabled = true;
+                startIngestionBtn.disabled = true;
+                // Refresh button disabled by fetchApi
+
+                try {
+                    const endpoint = `/buckets/${encodeURIComponent(selectedBucket)}`;
+                    // fetchApi implicitly handles key/base URL
+                    const response = await fetchApi(endpoint, { method: "DELETE" });
+
+                    // DELETE often returns 204 No Content on success
+                    if (response instanceof Response && response.status === 204) {
+                        showStatusIndicator(
+                            "✅",
+                            `Connection registration '${selectedBucket}' removed.`,
+                        ); // Updated text
+                        // Remove from dropdown
+                        const optionToRemove = bucketConnectionSelect.querySelector(
+                            `option[value="${selectedBucket}"]`,
+                        );
+                        if (optionToRemove) {
+                            optionToRemove.remove();
+                        }
+                        // Reset selection and update placeholder if needed
+                        bucketConnectionSelect.value = "";
+                        if (bucketConnectionSelect.options.length <= 1) {
+                            // Check if only placeholder is left
+                            bucketConnectionSelect.innerHTML =
+                                '<option value="">-- No connections registered --</option>';
+                        } else {
+                            bucketConnectionSelect.innerHTML =
+                                '<option value="">-- Select a Connection --</option>' +
+                                bucketConnectionSelect.innerHTML; // Re-add placeholder if others remain
+                            bucketConnectionSelect.value = ""; // Ensure placeholder is selected
+                        }
+                    } else {
+                        // If fetchApi returned something else (e.g., parsed JSON from a 200 OK on DELETE), handle it or log warning.
+                        console.warn(
+                            "Received unexpected response type/status after DELETE:",
+                            response,
+                        );
+                        // Assume success if response.ok is true, even if not 204
+                        if (response instanceof Response && response.ok) {
+                            showStatusIndicator(
+                                "✅",
+                                `Connection registration '${selectedBucket}' removal initiated (Status: ${response.status}). Refreshing list...`,
+                            );
+                            await listBucketConnections(false); // Refresh list to confirm removal
+                        } else {
+                            throw new Error(`Unexpected status or response format during removal.`);
+                        }
+                    }
+                } catch (error) {
+                    handleApiError(error, `Failed to remove connection '${selectedBucket}'`); // Updated text
+                } finally {
+                    updateButtonStates();
+                }
+            }
+
+            /**
+             * Starts the ingestion process for the selected bucket connection.
+             */
+            async function startIngestion() {
+                // API Key and Base URL checked by fetchApi
+                const selectedBucket = bucketConnectionSelect.value;
+                if (!selectedBucket) {
+                    showStatusIndicator(
+                        "⚠️",
+                        "Please select a connection to start ingestion.",
+                        false,
+                        ERROR_DISPLAY_DURATION,
+                    );
+                    return;
+                }
+
+                const callbackUrl = ingestCallbackUrlInput.value.trim();
+                if (!callbackUrl) {
+                    showStatusIndicator(
+                        "⚠️",
+                        "Callback URL is required for status updates.",
+                        false,
+                        ERROR_DISPLAY_DURATION,
+                    );
+                    ingestCallbackUrlInput.focus();
+                    return;
+                }
+                try {
+                    new URL(callbackUrl);
+                } catch (_) {
+                    showStatusIndicator(
+                        "⚠️",
+                        "The Callback URL is not valid.",
+                        false,
+                        ERROR_DISPLAY_DURATION,
+                    );
+                    ingestCallbackUrlInput.focus();
+                    return;
+                }
+
+                // Indicate loading via cursor (handled by fetchApi)
+                startIngestionBtn.disabled = true;
+                removeConnectionBtn.disabled = true; // Also disable remove during start
+                // Refresh button disabled by fetchApi
+
+                const body = {
+                    callback_url: callbackUrl,
+                };
+
+                try {
+                    const endpoint = `/buckets/${encodeURIComponent(selectedBucket)}/ingest`;
+                    // fetchApi implicitly handles key/base URL
+                    const result = await fetchApi(endpoint, { method: "POST", body });
+
+                    // Expecting JSON like {"data": {"status": "...", ...}}
+                    if (result && result.data && result.data.status) {
+                        showStatusIndicator(
+                            "✅",
+                            `Ingestion started for '${selectedBucket}'. Status: ${result.data.status}.`,
+                        );
+                    } else {
+                        // Handle cases like 202 Accepted without a detailed body
+                        if (result instanceof Response && result.ok) {
+                            showStatusIndicator(
+                                "✅",
+                                `Ingestion request accepted for '${selectedBucket}' (Status: ${result.status}).`,
+                            );
+                        } else {
+                            throw new Error("Unexpected response format after starting ingestion.");
+                        }
+                    }
+                } catch (error) {
+                    handleApiError(error, `Failed to start ingestion for '${selectedBucket}'`);
+                } finally {
+                    updateButtonStates(); // Re-enable buttons as appropriate
+                }
+            }
+
+            /**
+             * =========================
+             * INITIALIZATION & EVENT LISTENERS
+             * =========================
+             */
+
+            // Assign event listeners
+            registerConnectionBtn.onclick = registerConnection; // Renamed
+            refreshConnectionsBtn.onclick = () => listBucketConnections(true); // Renamed
+            removeConnectionBtn.onclick = removeConnection; // Renamed
+            startIngestionBtn.onclick = startIngestion;
+            bucketConnectionSelect.onchange = updateButtonStates;
+
+            // Setup Persistence and Load Settings on page load
+            document.addEventListener("DOMContentLoaded", () => {
+                setupPersistenceListeners();
+                loadSettings(); // Load settings *after* listeners are attached
+                // Initial state update after loading potential API key/URL and buckets
+                updateButtonStates();
+            });
+        </script>
+    </body>
+</html>
