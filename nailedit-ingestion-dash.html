@@ -4,13 +4,11 @@
         <title>NailedIT Ingestion API Dashboard</title>
         <meta charset="UTF-8" />
         <meta http-equiv="Access-Control-Allow-Origin" content="*" />
-        <!-- Removed preconnect link as URL is now dynamic -->
         <style>
             body {
                 font-family: Arial, sans-serif;
                 margin: 20px;
-                /* 4. Page background color */
-                background-color: #f8ece4;
+                background-color: #f8ece4; /* Page background color */
             }
             #app-container {
                 max-width: 1200px;
@@ -18,8 +16,7 @@
                 background-color: #fff;
                 padding: 20px;
                 border-radius: 8px;
-                /* 4. Darker backdrop shadow */
-                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+                box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3); /* Darker backdrop shadow */
             }
             h1 {
                 color: #333;
@@ -47,7 +44,6 @@
                 flex: 1 1 calc(50% - 10px); /* Basis 50% minus half gap */
                 min-width: 300px; /* Prevent getting too narrow */
             }
-            /* --- End Top Controls Layout --- */
 
             summary {
                 cursor: pointer;
@@ -57,12 +53,13 @@
                 border: 1px solid #eee;
                 border-radius: 4px;
                 margin-bottom: 10px;
-                list-style: none;
+                list-style: none; /* Hide default marker */
                 display: flex;
                 align-items: center;
                 gap: 8px;
             }
             summary::before {
+                /* Custom disclosure marker */
                 content: "►";
                 font-size: 0.8em;
                 line-height: 1;
@@ -76,7 +73,7 @@
                 border: 1px solid #eee;
                 border-top: none;
                 border-radius: 0 0 4px 4px;
-                margin-top: -11px;
+                margin-top: -11px; /* Overlap with summary border */
                 margin-bottom: 20px;
             }
 
@@ -110,8 +107,7 @@
                 box-sizing: border-box;
             }
             button {
-                /* 4. Button color */
-                background-color: #6700d4;
+                background-color: #6700d4; /* Button color */
                 color: white;
                 cursor: pointer;
                 border: none;
@@ -122,8 +118,7 @@
                 width: 100%;
             }
             button:hover:not(:disabled) {
-                /* Slightly darker hover for the new color */
-                background-color: #5200a3;
+                background-color: #5200a3; /* Slightly darker hover */
             }
             button:disabled {
                 background-color: #ccc;
@@ -133,12 +128,11 @@
                 margin-bottom: 15px;
             }
             .form-group small {
-                /* Style for the small helper text */
                 display: block;
                 font-size: 0.85em;
                 color: #666;
-                margin-top: -5px; /* Adjust spacing */
-                margin-bottom: 10px; /* Add space below */
+                margin-top: -5px;
+                margin-bottom: 10px;
             }
             .optional-label {
                 font-weight: normal;
@@ -160,19 +154,18 @@
                 color: white;
                 border-radius: 5px;
                 z-index: 1000;
-                display: none;
+                display: none; /* Hidden by default */
                 font-size: 1.1em;
                 transition: opacity 0.3s ease-in-out;
-                opacity: 0;
+                opacity: 0; /* Hidden by default */
             }
             #status-indicator.visible {
                 display: block;
                 opacity: 1;
             }
             #status-indicator.error {
-                background-color: rgba(220, 53, 69, 0.8);
+                background-color: rgba(220, 53, 69, 0.8); /* Red for errors */
             }
-            /* Ensure buttons inside the bucket selection area are also full width */
             #bucket-selection-controls button {
                 width: 100%;
                 margin-top: 5px;
@@ -182,21 +175,20 @@
     </head>
     <body>
         <div id="app-container">
-            <h1>NailedIT Ingestion API Dashboard</h1>
+            <h1>✨ NailedIT Ingestion API Dashboard ✨</h1>
 
-            <!-- 1. Top Controls: API Base URL, Key and Bucket Selection -->
+            <!-- Top Controls: API Base URL, Key and Bucket Selection -->
             <div id="top-controls">
                 <div class="form-group">
                     <label for="apiKeyInput">API Key:</label>
                     <input type="text" id="apiKeyInput" placeholder="Enter your X-API-Key" value="" />
                     <small>This key will be used for all API requests.</small>
 
-                    <!-- ADDED: API Base URL Input -->
                     <label for="apiBaseUrlInput" style="margin-top: 10px">API Base URL:</label>
                     <input
                         type="url"
                         id="apiBaseUrlInput"
-                        placeholder="Enter the API base URL"
+                        placeholder="Enter the API base URL (e.g., https://...)"
                         value=""
                     />
                     <small>The root URL of the NailedIT API.</small>
@@ -206,23 +198,19 @@
                     <select id="bucketConnectionSelect" disabled>
                         <option value="">-- Enter API Key & Base URL First --</option>
                     </select>
-                    <!-- 2. Refresh Button (Moved Here) -->
                     <button id="refreshConnectionsBtn" disabled>Refresh Connections</button>
-                    <!-- 2. Remove Button (Moved Here) -->
                     <button id="removeConnectionBtn" disabled>Remove Selected Connection</button>
                 </div>
             </div>
 
             <hr />
 
-            <!-- Main Content Area (Two Columns for collapsible sections) -->
+            <!-- Main Content Area (Collapsible Sections) -->
             <div id="main-content">
-                <!-- Bucket Registration Section (Collapsible) -->
+                <!-- Bucket Registration Section -->
                 <details>
-                    <!-- 2. Renamed Summary -->
                     <summary><h2>Bucket Connection Registration</h2></summary>
                     <div>
-                        <!-- Bucket Registration Form -->
                         <div class="form-group">
                             <h3>Register New Connection</h3>
                             <label for="regBucketName">Bucket Name:</label>
@@ -281,11 +269,10 @@
 
                             <button id="registerConnectionBtn">Register Connection</button>
                         </div>
-                        <!-- 2. Removed Manage Registered Buckets sub-section -->
                     </div>
                 </details>
 
-                <!-- Bucket Ingestion Section (Collapsible) -->
+                <!-- Bucket Ingestion Section -->
                 <details>
                     <summary><h2>Bucket Data Ingestion</h2></summary>
                     <div>
@@ -318,13 +305,16 @@
              * CONFIGURATION CONSTANTS
              * =========================
              */
-            // const API_BASE_URL = "https://aretrace--nailedit-app-v0-api-service-dev.modal.run"; // Now read from input
+
+            /** @constant {string} The HTTP header name used for the API key. */
             const API_KEY_HEADER = "X-API-Key";
+            /** @constant {number} Default duration (in milliseconds) to display status messages. */
             const STATUS_DISPLAY_DURATION = 4000;
+            /** @constant {number} Duration (in milliseconds) to display error messages. */
             const ERROR_DISPLAY_DURATION = 6000;
-            // 3. List of input IDs to persist
+            /** @constant {string[]} List of input element IDs whose values should be persisted in localStorage. */
             const PERSISTENT_INPUT_IDS = [
-                "apiBaseUrlInput", // Added Base URL input ID
+                "apiBaseUrlInput",
                 "apiKeyInput",
                 "regBucketName",
                 "regAccessKeyId",
@@ -340,25 +330,26 @@
              * DOM ELEMENT REFERENCES
              * =========================
              */
-            const apiBaseUrlInput = document.getElementById("apiBaseUrlInput"); // Added Base URL input reference
+            const apiBaseUrlInput = document.getElementById("apiBaseUrlInput");
             const apiKeyInput = document.getElementById("apiKeyInput");
-            // Connection Selection/Management Elements (Top Area)
+            // Connection Selection/Management Elements
             const bucketConnectionSelect = document.getElementById("bucketConnectionSelect");
             const refreshConnectionsBtn = document.getElementById("refreshConnectionsBtn");
-            const removeConnectionBtn = document.getElementById("removeConnectionBtn"); // Renamed from deleteBucketBtn
-            // Registration Elements
+            const removeConnectionBtn = document.getElementById("removeConnectionBtn");
+            // Registration Form Elements
             const regBucketNameInput = document.getElementById("regBucketName");
             const regAccessKeyIdInput = document.getElementById("regAccessKeyId");
             const regSecretAccessKeyInput = document.getElementById("regSecretAccessKey");
             const regRegionInput = document.getElementById("regRegion");
             const regProviderInput = document.getElementById("regProvider");
             const regEndpointUrlInput = document.getElementById("regEndpointUrl");
-            const registerConnectionBtn = document.getElementById("registerConnectionBtn"); // Renamed
-            // Ingestion Elements
+            const registerConnectionBtn = document.getElementById("registerConnectionBtn");
+            // Ingestion Form Elements
             const ingestCallbackUrlInput = document.getElementById("ingestCallbackUrl");
             const startIngestionBtn = document.getElementById("startIngestionBtn");
             // Status Indicator Element
             const statusIndicator = document.getElementById("status-indicator");
+            /** @type {number | null} Timeout ID for the status indicator hide timer. */
             let statusTimeoutId = null;
 
             /**
@@ -368,7 +359,12 @@
              */
 
             /**
-             * Shows a status message in the corner of the screen.
+             * Shows a status message overlay in the top-right corner of the screen.
+             * @param {string} emoji - An emoji to prefix the message (e.g., "✅", "❌", "⚠️").
+             * @param {string} message - The status message text to display.
+             * @param {boolean} [isError=false] - If true, styles the indicator as an error message and uses a longer default duration.
+             * @param {number} [duration=STATUS_DISPLAY_DURATION] - How long the message should be visible (ms). Overridden by ERROR_DISPLAY_DURATION if isError is true.
+             * @returns {void}
              */
             function showStatusIndicator(
                 emoji,
@@ -376,27 +372,30 @@
                 isError = false,
                 duration = STATUS_DISPLAY_DURATION,
             ) {
-                if (statusTimeoutId) clearTimeout(statusTimeoutId);
+                if (statusTimeoutId) clearTimeout(statusTimeoutId); // Clear any existing timer
                 const displayDuration = isError ? ERROR_DISPLAY_DURATION : duration;
 
                 statusIndicator.innerHTML = `${emoji} ${message}`;
                 statusIndicator.classList.toggle("error", isError);
-                statusIndicator.classList.add("visible");
+                statusIndicator.classList.add("visible"); // Make it visible
 
+                // Set a timer to hide the indicator
                 statusTimeoutId = setTimeout(() => {
                     statusIndicator.classList.remove("visible");
+                    // Clean up content after fade-out transition completes
                     setTimeout(() => {
                         if (!statusIndicator.classList.contains("visible")) {
                             statusIndicator.innerHTML = "";
                             statusIndicator.classList.remove("error");
                         }
-                    }, 300);
+                    }, 300); // Matches CSS transition duration
                     statusTimeoutId = null;
                 }, displayDuration);
             }
 
             /**
-             * Retrieves the API key from the input field. Shows status indicator if missing.
+             * Retrieves the API key from the input field. Shows a status indicator and returns null if missing.
+             * @returns {string | null} The trimmed API key, or null if the input is empty.
              */
             function getApiKey() {
                 const apiKey = apiKeyInput.value.trim();
@@ -409,7 +408,8 @@
             }
 
             /**
-             * Retrieves the API Base URL from the input field. Shows status indicator if missing or invalid.
+             * Retrieves the API Base URL from the input field. Shows a status indicator and returns null if missing or invalid.
+             * @returns {string | null} The trimmed API base URL (without trailing slash), or null if the input is empty or not a valid URL.
              */
             function getApiBaseUrl() {
                 const baseUrl = apiBaseUrlInput.value.trim();
@@ -424,7 +424,7 @@
                     return null;
                 }
                 try {
-                    // Basic validation: check if it parses as a URL and has a protocol
+                    // Basic validation: check if it parses as a URL and has a protocol/host
                     const parsedUrl = new URL(baseUrl);
                     if (!parsedUrl.protocol || !parsedUrl.host) {
                         throw new Error("Incomplete URL");
@@ -444,15 +444,20 @@
             }
 
             /**
-             * Handles API errors by logging and displaying a status message.
+             * Handles errors from API calls, logging details and showing a user-friendly status message.
+             * Attempts to parse error details from the Response body if available.
+             * @param {Error | Response} error - The error object or Response object from a failed fetch.
+             * @param {string} contextMessage - A message describing the context of the error (e.g., "Failed to list connections").
+             * @returns {Promise<void>} Resolves after logging and showing the indicator.
              */
             async function handleApiError(error, contextMessage) {
                 console.error(`${contextMessage}:`, error);
                 let displayMessage = `${contextMessage}. Check console for details.`;
 
+                // Attempt to extract more specific error message from Response object
                 if (error instanceof Response) {
                     try {
-                        const errorData = await error.json();
+                        const errorData = await error.json(); // Try parsing error JSON body
                         if (errorData.error && errorData.error.message) {
                             displayMessage = `${contextMessage}: ${errorData.error.message} (Status: ${error.status})`;
                         } else if (error.statusText) {
@@ -461,10 +466,12 @@
                             displayMessage = `${contextMessage}: Received status ${error.status}.`;
                         }
                     } catch (parseError) {
+                        // If JSON parsing fails, fallback to status code/text
                         console.warn("Failed to parse error response body:", parseError);
                         displayMessage = `${contextMessage}: Received status ${error.status}. Failed to parse details.`;
                     }
                 } else if (error instanceof Error) {
+                    // Handle standard JavaScript errors (e.g., network errors)
                     displayMessage = `${contextMessage}: ${error.message}`;
                 }
 
@@ -472,8 +479,16 @@
             }
 
             /**
-             * A generic wrapper for fetch API calls to the backend.
-             * Reads Base URL and API Key from inputs.
+             * Performs a generic fetch request to the NailedIT API.
+             * Automatically includes the API key from the input field and constructs the full URL.
+             * Handles basic request/response processing, including JSON parsing and error handling setup.
+             * Sets the body cursor to 'wait' during the request.
+             * @param {string} endpoint - The API endpoint path (e.g., "/buckets").
+             * @param {RequestInit} [options={}] - Standard fetch options (method, body, etc.). Content-Type is added if not present and body is an object.
+             * @returns {Promise<object|Response>} A promise that resolves to the parsed JSON response data, or the raw Response object for non-JSON/empty responses (like 204 No Content).
+             * @throws {Error} Throws an error if the API Key or Base URL is missing/invalid, if the fetch fails (network error),
+             *                 or if the response is not ok (forwarding the Response object for further processing),
+             *                 or if JSON parsing fails on an expected JSON response.
              */
             async function fetchApi(endpoint, options = {}) {
                 const apiKey = getApiKey();
@@ -481,16 +496,20 @@
 
                 if (!apiKey || !baseUrl) {
                     // Error messages are shown by getApiKey/getApiBaseUrl
+                    // Ensure buttons reflect the invalid state before throwing
+                    updateButtonStates();
                     throw new Error("API Key or Base URL is missing or invalid."); // Prevent fetch
                 }
 
-                const url = `${baseUrl}${endpoint}`; // Base URL already trimmed of trailing slash
+                // Construct URL and headers
+                const url = `${baseUrl}${endpoint}`;
                 const headers = {
                     ...(options.headers || {}),
                     [API_KEY_HEADER]: apiKey,
-                    Accept: "application/json",
+                    Accept: "application/json", // Prefer JSON responses
                 };
 
+                // Automatically set Content-Type for JSON if body is an object (and not FormData)
                 if (
                     !(options.body instanceof FormData) &&
                     options.body != null &&
@@ -502,10 +521,11 @@
                 const fetchOptions = {
                     ...options,
                     headers,
-                    mode: "cors",
-                    cache: "no-cache",
+                    mode: "cors", // Ensure CORS is enabled
+                    cache: "no-cache", // Prevent caching of API responses
                 };
 
+                // Stringify body if it's an object (and not FormData)
                 if (
                     typeof fetchOptions.body === "object" &&
                     !(fetchOptions.body instanceof FormData) &&
@@ -514,52 +534,40 @@
                     fetchOptions.body = JSON.stringify(fetchOptions.body);
                 }
 
-                document.body.style.cursor = "wait";
-                // Disable refresh button during any API call
-                refreshConnectionsBtn.disabled = true;
+                document.body.style.cursor = "wait"; // Indicate loading
+                updateButtonStates(); // Update states reflecting the 'wait' cursor (disables buttons during request)
 
                 try {
                     const response = await fetch(url, fetchOptions);
 
                     if (!response.ok) {
-                        throw response; // Let handleApiError process the response
+                        // Throw the response object itself for detailed error handling by handleApiError
+                        throw response;
                     }
 
-                    // Handle 204 No Content specifically
+                    // Handle 204 No Content specifically - return the response object
                     if (response.status === 204) {
-                        return response; // Return the response object itself for status check
+                        return response;
                     }
 
-                    // Handle potential empty body for other success statuses (e.g., 200 OK with no body)
+                    // Check Content-Type and length for other successful responses
                     const contentType = response.headers.get("content-type");
                     const contentLength = response.headers.get("content-length");
 
+                    // If no content or not JSON, return the raw response object
                     if (
                         contentLength === "0" ||
                         !contentType ||
                         !contentType.includes("application/json")
                     ) {
-                        // If no content or not JSON, attempt to read text but prefer returning response if successful
                         console.warn(
-                            "Received non-JSON or empty response from API:",
-                            response.status,
-                            response.statusText,
+                            `API returned status ${response.status} with non-JSON or empty response for endpoint: ${endpoint}`,
                         );
-                        try {
-                            const text = await response.text(); // Try reading text for debugging
-                            if (text) console.warn("Response text:", text);
-                        } catch (e) {
-                            /* Ignore read error if already handled */
-                        }
-                        // Still return the response object if the status code was OK (2xx)
-                        if (response.ok) return response;
-                        // If it wasn't ok, it should have been thrown already, but as fallback:
-                        throw new Error(
-                            `API returned status ${response.status} with non-JSON response.`,
-                        );
+                        // Return the response object for status checking etc. in the caller
+                        return response;
                     }
 
-                    // If JSON is expected and seems present, parse it
+                    // Attempt to parse JSON if headers suggest it's present
                     try {
                         return await response.json();
                     } catch (e) {
@@ -569,47 +577,58 @@
                         );
                     }
                 } finally {
-                    document.body.style.cursor = "default";
-                    // Re-enable refresh button after API call finishes (respecting other conditions)
-                    updateButtonStates();
+                    document.body.style.cursor = "default"; // Reset cursor
+                    updateButtonStates(); // Re-evaluate button states after API call completion or failure
                 }
             }
 
             /**
-             * Updates the enabled/disabled state of buttons based on connection selection, API key, and Base URL.
+             * Updates the enabled/disabled state of various buttons and the connection select dropdown
+             * based on whether an API key/Base URL are present and a connection is selected.
+             * Called after API calls, selection changes, or input changes.
+             * @returns {void}
              */
             function updateButtonStates() {
                 const connectionSelected = bucketConnectionSelect.value !== "";
                 const apiKeyPresent = apiKeyInput.value.trim() !== "";
-                const baseUrlPresent = apiBaseUrlInput.value.trim() !== ""; // Check if Base URL is present
+                const baseUrlPresent = apiBaseUrlInput.value.trim() !== "";
+                const isApiCallInProgress = document.body.style.cursor === "wait";
 
-                // Enable remove/start only if a connection is selected AND key/URL are present
-                removeConnectionBtn.disabled = !(
-                    connectionSelected &&
-                    apiKeyPresent &&
-                    baseUrlPresent
-                );
-                startIngestionBtn.disabled = !(connectionSelected && apiKeyPresent && baseUrlPresent);
-
-                // The select dropdown is disabled if there's no API key/Base URL or no options (besides placeholder)
-                bucketConnectionSelect.disabled =
-                    !apiKeyPresent || !baseUrlPresent || bucketConnectionSelect.options.length <= 1;
-
-                // Refresh button is enabled only if API key and Base URL are present, and not during API calls
+                // Refresh button is enabled only if API key and Base URL are present, and not during an API call
                 refreshConnectionsBtn.disabled =
-                    !apiKeyPresent || !baseUrlPresent || document.body.style.cursor === "wait";
+                    !apiKeyPresent || !baseUrlPresent || isApiCallInProgress;
 
-                // Registration button should always be enabled (unless actively processing)
-                // Assuming registerConnectionBtn state is managed within its own function
+                // The select dropdown is disabled if there's no API key/Base URL, OR if an API call is in progress,
+                // OR if there are no options other than the placeholder (length <= 1 AND first option value is "")
+                const noValidOptions =
+                    bucketConnectionSelect.options.length <= 1 &&
+                    (bucketConnectionSelect.options.length === 0 ||
+                        bucketConnectionSelect.options[0].value === "");
+                bucketConnectionSelect.disabled =
+                    !apiKeyPresent || !baseUrlPresent || isApiCallInProgress || noValidOptions;
+
+                // Enable remove/start only if a connection is selected AND key/URL are present AND no API call in progress
+                const canInteractWithSelected =
+                    connectionSelected && apiKeyPresent && baseUrlPresent && !isApiCallInProgress;
+                removeConnectionBtn.disabled = !canInteractWithSelected;
+                startIngestionBtn.disabled = !canInteractWithSelected;
+
+                // Registration button should generally be enabled unless an API call is in progress.
+                registerConnectionBtn.disabled = isApiCallInProgress;
             }
 
             /**
              * =========================
-             * LOCAL STORAGE FUNCTIONS (Persistence - #3)
+             * LOCAL STORAGE FUNCTIONS (Persistence)
              * =========================
              */
 
-            /** Saves an input's value to localStorage */
+            /**
+             * Saves the value of an input field to localStorage.
+             * @param {string} inputId - The ID of the input element.
+             * @param {string} value - The value to save.
+             * @returns {void}
+             */
             function saveSetting(inputId, value) {
                 try {
                     localStorage.setItem(inputId, value);
@@ -618,7 +637,12 @@
                 }
             }
 
-            /** Loads persisted settings from localStorage into input fields */
+            /**
+             * Loads persisted settings from localStorage into their corresponding input fields.
+             * Attempts to list connections automatically if both API key and Base URL are found.
+             * Also attempts to ping the API if the Base URL is found.
+             * @returns {void}
+             */
             function loadSettings() {
                 PERSISTENT_INPUT_IDS.forEach((id) => {
                     const savedValue = localStorage.getItem(id);
@@ -628,32 +652,52 @@
                     }
                 });
 
-                // Special handling for API key & Base URL: trigger list if both exist
+                // Special handling for API key & Base URL: trigger connection list and ping if both exist
                 const savedApiKey = localStorage.getItem("apiKeyInput");
                 const savedBaseUrl = localStorage.getItem("apiBaseUrlInput");
+                // Call updateButtonStates *before* potentially starting async calls
+                // to set initial state based on loaded values.
+                updateButtonStates();
+
                 if (savedApiKey && savedBaseUrl) {
-                    console.log(
-                        "API Key & Base URL found in storage, attempting to list connections...",
-                    );
-                    listBucketConnections(false); // false = don't show indicator just for loading
+                    console.log("API Key & Base URL found in storage, attempting actions...");
+                    // Start listing connections (asynchronous)
+                    listBucketConnections(false); // false = don't show status indicator just for initial load
+
+                    // Start ping in the background (fire-and-forget, no await)
+                    pingIngestApi();
                 } else {
-                    updateButtonStates(); // Ensure buttons are correctly disabled if key/URL are missing
+                    // Ensure placeholder is correct if key/URL are missing on load
+                    bucketConnectionSelect.innerHTML =
+                        '<option value="">-- Enter API Key & Base URL First --</option>';
+                    updateButtonStates(); // Re-run to ensure select is disabled correctly
                 }
+                // Note: updateButtonStates is called again within listBucketConnections/fetchApi finally block
             }
 
-            /** Attaches event listeners to save inputs on change */
+            /**
+             * Attaches 'change' event listeners to persistent input fields to save their values automatically.
+             * If API key or Base URL changes, it triggers an update of button states and a refresh of the bucket list.
+             * @returns {void}
+             */
             function setupPersistenceListeners() {
                 PERSISTENT_INPUT_IDS.forEach((id) => {
                     const inputElement = document.getElementById(id);
                     if (inputElement) {
                         inputElement.addEventListener("change", (event) => {
-                            saveSetting(event.target.id, event.target.value);
-                            // If API key or Base URL changed, attempt to refresh bucket list
-                            if (
-                                event.target.id === "apiKeyInput" ||
-                                event.target.id === "apiBaseUrlInput"
-                            ) {
-                                listBucketConnections(false); // Refresh quietly
+                            const target = event.target;
+                            saveSetting(target.id, target.value);
+                            // If API key or Base URL changed, update button states and attempt refresh
+                            if (target.id === "apiKeyInput" || target.id === "apiBaseUrlInput") {
+                                // *** FIX: Call updateButtonStates immediately after change ***
+                                // This ensures buttons like 'Refresh' enable as soon as both fields are filled,
+                                // even before the listConnections API call completes.
+                                updateButtonStates();
+
+                                // Refresh list quietly without success indicator
+                                listBucketConnections(false);
+                                // Also try pinging again on URL/Key change
+                                pingIngestApi();
                             }
                         });
                     }
@@ -662,12 +706,73 @@
 
             /**
              * =========================
-             * API INTERACTION FUNCTIONS (Updated Terminology - #2)
+             * API INTERACTION FUNCTIONS
              * =========================
              */
 
             /**
-             * Registers a new S3 bucket connection via the API.
+             * Sends a ping request to the API's /ping-ingest endpoint.
+             * Logs success to the console and shows a status indicator on failure.
+             * Does nothing if the Base URL is not set.
+             * @returns {Promise<void>}
+             */
+            async function pingIngestApi() {
+                // Use getApiBaseUrl for validation consistency, but don't block if it returns null initially
+                const baseUrl = apiBaseUrlInput.value.trim(); // Quick check
+                if (!baseUrl) {
+                    console.log("Skipping API ping: Base URL not set.");
+                    return;
+                }
+
+                console.log("Attempting API ping...");
+                try {
+                    // fetchApi handles base URL, key (if present), headers, method, basic fetch logic
+                    // Note: This will send the API key header if an API key is present in the input.
+                    const responsePromise = fetchApi("/ping-ingest", { method: "GET" });
+
+                    // Handle the promise outcome without blocking
+                    responsePromise
+                        .then((response) => {
+                            // Check if the response status is OK (e.g., 200)
+                            // fetchApi returns the Response object for non-JSON/empty or 204 responses
+                            if (response instanceof Response && response.ok) {
+                                console.log(`API Ping Successful (Status: ${response.status}).`);
+                                // Optional: Show a brief success indicator if needed
+                                // showStatusIndicator("✅", "API Ping OK", false, 2000);
+                            } else if (
+                                typeof response === "object" &&
+                                response !== null &&
+                                !(response instanceof Response)
+                            ) {
+                                // Handle case where fetchApi successfully parsed JSON (might be unexpected for a simple ping)
+                                console.log("API Ping Successful (Received JSON data):", response);
+                            }
+                            // If fetchApi threw an error (non-ok response), it will be caught below.
+                            // If fetchApi returned something unexpected, log it.
+                            else if (!(response instanceof Response)) {
+                                console.warn("Unexpected response type from ping:", response);
+                            }
+                            // No explicit failure case here for non-ok that wasn't thrown, though fetchApi usually throws.
+                        })
+                        .catch((error) => {
+                            // handleApiError will show a status indicator
+                            // This catch block handles errors from the fetchApi call itself (e.g., network error, non-ok response)
+                            handleApiError(error, "API Ping Failed");
+                        });
+                } catch (error) {
+                    // This catch block handles immediate errors *before* the async fetch starts
+                    // (e.g., if getApiKey or getApiBaseUrl fail synchronously within fetchApi).
+                    // Most errors (network, non-ok status) will be caught by the .catch() above.
+                    handleApiError(error, "API Ping Failed (Initial Setup)");
+                }
+                // Note: updateButtonStates() is NOT called here to avoid interfering with other ongoing operations.
+                // The ping is meant to be non-blocking. Button states are updated by fetchApi's finally block.
+            }
+
+            /**
+             * Registers a new S3 bucket connection configuration via the API.
+             * Reads connection details from the registration form inputs.
+             * @returns {Promise<void>} Resolves after the registration attempt (success or failure).
              */
             async function registerConnection() {
                 // API Key and Base URL are checked within fetchApi
@@ -676,8 +781,9 @@
                 const secretAccessKey = regSecretAccessKeyInput.value.trim();
                 const region = regRegionInput.value.trim();
                 const provider = regProviderInput.value.trim();
-                const endpointUrl = regEndpointUrlInput.value.trim() || null;
+                const endpointUrl = regEndpointUrlInput.value.trim() || null; // Use null if empty
 
+                // Basic client-side validation
                 if (!bucketName || !accessKeyId || !secretAccessKey || !region || !provider) {
                     showStatusIndicator(
                         "⚠️",
@@ -693,158 +799,184 @@
                     aws_secret_access_key: secretAccessKey,
                     region: region,
                     provider: provider,
+                    // Conditionally include endpoint_url only if it has a value
                     ...(endpointUrl && { endpoint_url: endpointUrl }),
                 };
 
-                registerConnectionBtn.disabled = true;
+                // Button disabling is handled by fetchApi's state updates via updateButtonStates
+                // registerConnectionBtn.disabled = true;
 
                 try {
                     const endpoint = `/buckets/${encodeURIComponent(bucketName)}`;
-                    // fetchApi now implicitly handles key/base URL
+                    // fetchApi handles key/base URL checks and base fetch logic
                     const result = await fetchApi(endpoint, { method: "POST", body });
 
+                    // Check for successful registration (expecting JSON with data.name or a successful Response)
                     if (result && result.data && result.data.name) {
                         showStatusIndicator(
                             "✅",
                             `Connection for '${result.data.name}' registered. Refreshing list...`,
                         );
-                        await listBucketConnections(false);
-                        // Clear sensitive fields after successful registration? Optional.
+                        await listBucketConnections(false); // Refresh list without indicator
+                        // Optional: Clear sensitive fields after success
                         // regAccessKeyIdInput.value = ''; saveSetting('regAccessKeyId', '');
                         // regSecretAccessKeyInput.value = ''; saveSetting('regSecretAccessKey', '');
+                    } else if (result instanceof Response && result.ok) {
+                        // Handle cases like 201 Created where response might not have expected JSON body
+                        showStatusIndicator(
+                            "✅",
+                            `Connection for '${bucketName}' registered (Status: ${result.status}). Refreshing list...`,
+                        );
+                        await listBucketConnections(false);
                     } else {
-                        // Handle cases where fetchApi might return the raw response on success (e.g., 201 Created with location header but no body)
-                        // Check response status code if result is not the expected JSON structure
-                        if (result instanceof Response && result.ok) {
-                            showStatusIndicator(
-                                "✅",
-                                `Connection for '${bucketName}' registered (status ${result.status}). Refreshing list...`,
-                            );
-                            await listBucketConnections(false);
-                        } else {
-                            throw new Error("Unexpected response format after registration.");
-                        }
+                        // If result is neither expected JSON nor a successful Response object
+                        console.warn("Unexpected response format after registration:", result);
+                        throw new Error("Unexpected response format after registration.");
                     }
                 } catch (error) {
                     handleApiError(error, "Failed to register connection");
                 } finally {
-                    registerConnectionBtn.disabled = false;
+                    // Button states are updated by fetchApi's finally block
                 }
             }
 
             /**
-             * Fetches the list of registered bucket connections and populates the dropdown.
-             * @param {boolean} [showIndicator=true] - Whether to show a success/info indicator.
+             * Fetches the list of registered bucket connections from the API and populates the dropdown select element.
+             * Handles various response scenarios including success, no connections, and errors.
+             * @param {boolean} [showIndicator=true] - Whether to show a success/info status indicator upon completion. Errors always show an indicator.
+             * @returns {Promise<void>} Resolves after attempting to list connections and update the UI.
              */
             async function listBucketConnections(showIndicator = true) {
-                const apiKey = apiKeyInput.value.trim(); // Get key directly for checks
-                const baseUrl = apiBaseUrlInput.value.trim(); // Get base URL for checks
+                // Pre-flight check for API key/URL before making the call
+                const apiKey = apiKeyInput.value.trim();
+                const baseUrl = apiBaseUrlInput.value.trim();
 
                 if (!apiKey || !baseUrl) {
-                    // Update UI if no API key or base URL
+                    // Update UI to reflect missing credentials
                     bucketConnectionSelect.innerHTML =
-                        '<option value="">-- Enter API Key & Base URL --</option>';
+                        '<option value="">-- Enter API Key & Base URL First --</option>';
                     if (
                         showIndicator &&
-                        (document.getElementById("apiKeyInput") === document.activeElement ||
-                            document.getElementById("apiBaseUrlInput") === document.activeElement)
+                        (document.activeElement === apiKeyInput ||
+                            document.activeElement === apiBaseUrlInput ||
+                            document.activeElement === refreshConnectionsBtn) // Show indicator if manually refreshed
                     ) {
-                        // Only show indicator if user likely intended to list
+                        // Only show indicator if user likely interacted with key/URL inputs recently or clicked refresh
                         showStatusIndicator(
                             "⚠️",
-                            "API Key and Base URL are required to list connections.", // Updated message
+                            "API Key and Base URL are required to list connections.",
                             false,
                             ERROR_DISPLAY_DURATION,
                         );
                     }
                     updateButtonStates(); // Ensure buttons/select reflect missing key/URL
-                    return;
+                    return; // Don't proceed with API call
                 }
 
-                // Indicate loading via cursor (handled by fetchApi)
-                // Disable select during load
+                // Update UI state for loading
                 bucketConnectionSelect.innerHTML = '<option value="">-- Loading... --</option>';
-                updateButtonStates(); // Update general button states (refresh will be disabled by fetchApi)
+                // Disabling is handled by fetchApi via updateButtonStates
+                // bucketConnectionSelect.disabled = true;
+                // updateButtonStates(); // Update other button states (fetchApi will do this too)
 
                 try {
-                    // fetchApi now implicitly handles key/base URL
+                    // fetchApi handles key/base URL, headers, and basic fetch logic
+                    // It also handles button states during the request
                     const result = await fetchApi("/buckets", { method: "GET" });
 
+                    // Process successful response (expecting JSON with data.results array)
                     if (result && result.data && Array.isArray(result.data.results)) {
-                        bucketConnectionSelect.innerHTML =
-                            '<option value="">-- Select a Connection --</option>'; // Updated placeholder
-                        if (result.data.results.length === 0) {
+                        const bucketNames = result.data.results;
+                        bucketConnectionSelect.innerHTML = ""; // Clear loading message
+
+                        if (bucketNames.length === 0) {
                             bucketConnectionSelect.innerHTML =
-                                '<option value="">-- No connections registered --</option>'; // Updated placeholder
+                                '<option value="">-- No connections registered --</option>';
                             if (showIndicator)
                                 showStatusIndicator(
                                     "ℹ️",
                                     "No connections registered for this API key.",
                                 );
                         } else {
-                            result.data.results.forEach((bucketName) => {
+                            // Add placeholder and then connection options
+                            bucketConnectionSelect.innerHTML =
+                                '<option value="">-- Select a Connection --</option>';
+                            bucketNames.forEach((bucketName) => {
                                 const option = document.createElement("option");
                                 option.value = bucketName;
-                                option.textContent = bucketName; // Display the bucket name
+                                option.textContent = bucketName;
                                 bucketConnectionSelect.appendChild(option);
                             });
                             if (showIndicator)
                                 showStatusIndicator(
                                     "✅",
-                                    `Found ${result.data.results.length} connection(s).`,
+                                    `Found ${bucketNames.length} connection(s).`,
                                 );
-                        }
-                    } else {
-                        // Handle case where API might return empty success (e.g., 200 OK with empty array/no data field)
-                        if (result instanceof Response && result.ok) {
-                            bucketConnectionSelect.innerHTML =
-                                '<option value="">-- No connections registered --</option>';
-                            if (showIndicator) showStatusIndicator("ℹ️", "No connections found.");
-                        } else {
-                            bucketConnectionSelect.innerHTML =
-                                '<option value="">-- Error: Invalid response --</option>';
-                            if (showIndicator)
-                                showStatusIndicator(
-                                    "⚠️",
-                                    "Received invalid data listing connections.",
-                                    false,
-                                    ERROR_DISPLAY_DURATION,
-                                );
-                            console.warn(
-                                "Unexpected response format when listing connections:",
-                                result,
-                            );
                         }
                     }
+                    // Handle cases where API returns successful status but not the expected JSON format (e.g., empty 200 OK)
+                    else if (result instanceof Response && result.ok) {
+                        bucketConnectionSelect.innerHTML =
+                            '<option value="">-- No connections registered --</option>';
+                        if (showIndicator)
+                            showStatusIndicator(
+                                "ℹ️",
+                                "No connections found (empty success response).",
+                            );
+                        console.warn(
+                            "Received successful but non-standard response listing connections:",
+                            result,
+                        );
+                    }
+                    // Handle cases where result is neither expected JSON nor a successful Response
+                    else {
+                        bucketConnectionSelect.innerHTML =
+                            '<option value="">-- Error: Invalid response --</option>';
+                        if (showIndicator)
+                            showStatusIndicator(
+                                "⚠️",
+                                "Received invalid data listing connections.",
+                                false,
+                                ERROR_DISPLAY_DURATION,
+                            );
+                        console.warn("Unexpected response format when listing connections:", result);
+                    }
                 } catch (error) {
-                    // Handle 404 specifically as "no connections" or "bad key/url"
+                    // Handle specific HTTP errors (like 401/403/404) potentially indicating bad key/URL or no connections
                     if (
                         error instanceof Response &&
-                        (error.status === 404 || error.status === 401 || error.status === 403)
+                        (error.status === 401 || error.status === 403 || error.status === 404)
                     ) {
                         bucketConnectionSelect.innerHTML =
                             '<option value="">-- No connections found / Invalid Credentials --</option>';
                         if (showIndicator)
                             showStatusIndicator(
                                 "ℹ️",
-                                "No connections found (or API key/URL invalid).",
+                                `No connections found or invalid credentials (Status: ${error.status}).`,
+                                false,
+                                ERROR_DISPLAY_DURATION,
                             );
+                        // No need to call handleApiError here as it's a handled scenario
                     } else {
-                        // Handle other errors (including network errors from fetchApi check)
+                        // Handle other errors (network errors, unexpected server errors, JSON parse errors from fetchApi)
                         handleApiError(error, "Failed to list connections");
                         bucketConnectionSelect.innerHTML =
                             '<option value="">-- Error loading connections --</option>';
                     }
                 } finally {
-                    updateButtonStates(); // Re-evaluate all button/select states
+                    // Always re-evaluate button and select states after the attempt
+                    // fetchApi's finally block already calls updateButtonStates()
+                    updateButtonStates(); // Call again explicitly to ensure state after populating/clearing select
                 }
             }
 
             /**
-             * Removes the currently selected bucket connection registration.
+             * Removes the registration for the currently selected bucket connection via the API.
+             * Prompts the user for confirmation before proceeding.
+             * @returns {Promise<void>} Resolves after the removal attempt.
              */
             async function removeConnection() {
-                // API Key and Base URL checked by fetchApi
+                // API Key and Base URL checked implicitly by fetchApi
                 const selectedBucket = bucketConnectionSelect.value;
                 if (!selectedBucket) {
                     showStatusIndicator(
@@ -856,6 +988,7 @@
                     return;
                 }
 
+                // User confirmation
                 if (
                     !confirm(
                         `Are you sure you want to remove the connection registration for bucket '${selectedBucket}'? This action cannot be undone.`,
@@ -864,15 +997,13 @@
                     return;
                 }
 
-                // Indicate loading via cursor (handled by fetchApi)
-                // Disable buttons during removal
-                removeConnectionBtn.disabled = true;
-                startIngestionBtn.disabled = true;
-                // Refresh button disabled by fetchApi
+                // Button disabling is handled by fetchApi via updateButtonStates
+                // removeConnectionBtn.disabled = true;
+                // startIngestionBtn.disabled = true;
 
                 try {
                     const endpoint = `/buckets/${encodeURIComponent(selectedBucket)}`;
-                    // fetchApi implicitly handles key/base URL
+                    // fetchApi handles key/base URL, headers, method etc. and button states
                     const response = await fetchApi(endpoint, { method: "DELETE" });
 
                     // DELETE often returns 204 No Content on success
@@ -880,28 +1011,32 @@
                         showStatusIndicator(
                             "✅",
                             `Connection registration '${selectedBucket}' removed.`,
-                        ); // Updated text
-                        // Remove from dropdown
+                        );
+                        // Remove the option from the dropdown
                         const optionToRemove = bucketConnectionSelect.querySelector(
                             `option[value="${selectedBucket}"]`,
                         );
-                        if (optionToRemove) {
-                            optionToRemove.remove();
-                        }
-                        // Reset selection and update placeholder if needed
+                        if (optionToRemove) optionToRemove.remove();
+
+                        // Reset selection and update placeholder if the list becomes empty
                         bucketConnectionSelect.value = "";
-                        if (bucketConnectionSelect.options.length <= 1) {
-                            // If only placeholder is left (or none)
+                        if (
+                            bucketConnectionSelect.options.length <= 1 &&
+                            (bucketConnectionSelect.options.length === 0 ||
+                                bucketConnectionSelect.options[0].value === "")
+                        ) {
+                            // Check if only placeholder or nothing is left
                             bucketConnectionSelect.innerHTML =
                                 '<option value="">-- No connections registered --</option>';
                         }
+                        // Update states explicitly here after modifying select options
+                        updateButtonStates();
                     } else {
-                        // If fetchApi returned something else (e.g., parsed JSON from a 200 OK on DELETE), handle it or log warning.
+                        // Handle unexpected success responses (e.g., 200 OK on DELETE)
                         console.warn(
                             "Received unexpected response type/status after DELETE:",
                             response,
                         );
-                        // Assume success if response.ok is true, even if not 204
                         if (response instanceof Response && response.ok) {
                             showStatusIndicator(
                                 "✅",
@@ -909,21 +1044,29 @@
                             );
                             await listBucketConnections(false); // Refresh list to confirm removal
                         } else {
-                            throw new Error(`Unexpected status or response format during removal.`);
+                            // Throw an error if the response wasn't technically 'ok' or wasn't a Response object
+                            throw new Error(
+                                `Unexpected status (${response?.status}) or response format during removal.`,
+                            );
                         }
                     }
                 } catch (error) {
-                    handleApiError(error, `Failed to remove connection '${selectedBucket}'`); // Updated text
+                    handleApiError(error, `Failed to remove connection '${selectedBucket}'`);
+                    // Button states will be updated by fetchApi's finally block
                 } finally {
-                    updateButtonStates();
+                    // Re-evaluate button states after the operation completes.
+                    // fetchApi's finally block already does this.
+                    updateButtonStates(); // Call again explicitly after potential select manipulation
                 }
             }
 
             /**
-             * Starts the ingestion process for the selected bucket connection.
+             * Initiates the data ingestion process for the selected bucket connection via the API.
+             * Sends the provided callback URL for status updates.
+             * @returns {Promise<void>} Resolves after the ingestion start request attempt.
              */
             async function startIngestion() {
-                // API Key and Base URL checked by fetchApi
+                // API Key and Base URL checked implicitly by fetchApi
                 const selectedBucket = bucketConnectionSelect.value;
                 if (!selectedBucket) {
                     showStatusIndicator(
@@ -935,6 +1078,7 @@
                     return;
                 }
 
+                // Validate callback URL
                 const callbackUrl = ingestCallbackUrlInput.value.trim();
                 if (!callbackUrl) {
                     showStatusIndicator(
@@ -947,7 +1091,7 @@
                     return;
                 }
                 try {
-                    new URL(callbackUrl);
+                    new URL(callbackUrl); // Basic URL validation
                 } catch (_) {
                     showStatusIndicator(
                         "⚠️",
@@ -959,41 +1103,48 @@
                     return;
                 }
 
-                // Indicate loading via cursor (handled by fetchApi)
-                startIngestionBtn.disabled = true;
-                removeConnectionBtn.disabled = true; // Also disable remove during start
-                // Refresh button disabled by fetchApi
+                // Button disabling is handled by fetchApi via updateButtonStates
+                // startIngestionBtn.disabled = true;
+                // removeConnectionBtn.disabled = true;
 
-                const body = {
-                    callback_url: callbackUrl,
-                };
+                const body = { callback_url: callbackUrl };
 
                 try {
                     const endpoint = `/buckets/${encodeURIComponent(selectedBucket)}/ingest`;
-                    // fetchApi implicitly handles key/base URL
+                    // fetchApi handles key/base URL, headers, method, body stringification etc. and button states
                     const result = await fetchApi(endpoint, { method: "POST", body });
 
-                    // Expecting JSON like {"data": {"status": "...", ...}}
+                    // Expecting JSON like {"data": {"status": "...", ...}} on success (e.g., 202 Accepted)
                     if (result && result.data && result.data.status) {
                         showStatusIndicator(
                             "✅",
                             `Ingestion started for '${selectedBucket}'. Status: ${result.data.status}.`,
                         );
-                    } else {
-                        // Handle cases like 202 Accepted without a detailed body
-                        if (result instanceof Response && result.ok) {
-                            showStatusIndicator(
-                                "✅",
-                                `Ingestion request accepted for '${selectedBucket}' (Status: ${result.status}).`,
-                            );
-                        } else {
-                            throw new Error("Unexpected response format after starting ingestion.");
-                        }
+                    }
+                    // Handle alternative success responses like 202 Accepted without specific JSON body
+                    else if (result instanceof Response && result.ok) {
+                        // Common case: API returns 202 Accepted without a detailed body immediately
+                        showStatusIndicator(
+                            "✅",
+                            `Ingestion request accepted for '${selectedBucket}' (Status: ${result.status}). Check callback URL for updates.`,
+                        );
+                        console.log(
+                            "Received successful but potentially non-JSON response starting ingestion:",
+                            result,
+                        );
+                    }
+                    // Handle unexpected response format on success
+                    else {
+                        console.warn("Unexpected response format after starting ingestion:", result);
+                        throw new Error("Unexpected response format after starting ingestion.");
                     }
                 } catch (error) {
                     handleApiError(error, `Failed to start ingestion for '${selectedBucket}'`);
+                    // Button states will be updated by fetchApi's finally block
                 } finally {
-                    updateButtonStates(); // Re-enable buttons as appropriate
+                    // Re-evaluate button states after the operation completes.
+                    // fetchApi's finally block already does this.
+                    updateButtonStates();
                 }
             }
 
@@ -1003,19 +1154,30 @@
              * =========================
              */
 
-            // Assign event listeners
-            registerConnectionBtn.onclick = registerConnection; // Renamed
-            refreshConnectionsBtn.onclick = () => listBucketConnections(true); // Renamed
-            removeConnectionBtn.onclick = removeConnection; // Renamed
-            startIngestionBtn.onclick = startIngestion;
-            bucketConnectionSelect.onchange = updateButtonStates;
-
-            // Setup Persistence and Load Settings on page load
+            /**
+             * Initializes the dashboard by setting up event listeners and loading persisted settings.
+             * @listens DOMContentLoaded
+             */
             document.addEventListener("DOMContentLoaded", () => {
+                // Assign primary button actions
+                registerConnectionBtn.onclick = registerConnection;
+                refreshConnectionsBtn.onclick = () => listBucketConnections(true); // Show indicator on manual refresh
+                removeConnectionBtn.onclick = removeConnection;
+                startIngestionBtn.onclick = startIngestion;
+
+                // Update button states when connection selection changes
+                bucketConnectionSelect.onchange = updateButtonStates;
+
+                // Setup listeners to persist input values AND trigger updates
                 setupPersistenceListeners();
-                loadSettings(); // Load settings *after* listeners are attached
-                // Initial state update after loading potential API key/URL and buckets
-                updateButtonStates();
+
+                // Load previously saved settings from localStorage
+                // This also triggers initial listBucketConnections and pingIngestApi if key/URL exist
+                loadSettings();
+
+                // Perform an initial update of button states after loading potentially saved data
+                // Note: loadSettings() now calls updateButtonStates() itself appropriately.
+                // updateButtonStates();
             });
         </script>
     </body>
