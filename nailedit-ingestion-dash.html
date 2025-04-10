@@ -891,14 +891,9 @@
                         // Reset selection and update placeholder if needed
                         bucketConnectionSelect.value = "";
                         if (bucketConnectionSelect.options.length <= 1) {
-                            // Check if only placeholder is left
+                            // If only placeholder is left (or none)
                             bucketConnectionSelect.innerHTML =
                                 '<option value="">-- No connections registered --</option>';
-                        } else {
-                            bucketConnectionSelect.innerHTML =
-                                '<option value="">-- Select a Connection --</option>' +
-                                bucketConnectionSelect.innerHTML; // Re-add placeholder if others remain
-                            bucketConnectionSelect.value = ""; // Ensure placeholder is selected
                         }
                     } else {
                         // If fetchApi returned something else (e.g., parsed JSON from a 200 OK on DELETE), handle it or log warning.
