@@ -1,0 +1,347 @@
+<!doctype html>
+<html>
+    <head>
+        <title>NailedIT Search API Demo</title>
+        <meta charset="UTF-8" />
+        <meta http-equiv="Access-Control-Allow-Origin" content="*" />
+        <link rel="preconnect" href="https://aretrace--nailedit-app-v0-api-service.modal.run" />
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+            }
+            h1 {
+                color: #333;
+            }
+            label {
+                display: inline-block;
+                width: 150px;
+                margin-right: 10px;
+            }
+            input,
+            button {
+                margin-bottom: 10px;
+            }
+            #imageContainer img {
+                max-width: 200px;
+                margin: 10px;
+                cursor: pointer;
+            }
+            #imageContainer {
+                display: flex;
+                flex-wrap: wrap;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>NailedIT Search API Demo</h1>
+
+        <!-- Text search controls -->
+        <div>
+            <label for="queryInput">Search Query:</label>
+            <input type="text" id="queryInput" placeholder="Enter search terms..." />
+        </div>
+        <div>
+            <label for="textSearchAmount">Number of Results:</label>
+            <input type="number" id="textSearchAmount" value="5" min="1" />
+            <button id="fetchImagesBtn">Search Images</button>
+        </div>
+
+        <!-- Similar image search control -->
+        <div>
+            <label for="similarSearchAmount">Number of Similar Images:</label>
+            <input type="number" id="similarSearchAmount" value="5" min="1" />
+        </div>
+
+        <!-- Results container -->
+        <div id="imageContainer"></div>
+
+        <script>
+            /**
+             * =========================
+             * CONFIGURATION CONSTANTS
+             * =========================
+             */
+
+            // Base URL of the API - REPLACE <MODAL_ACCOUNT> with your actual Modal account name
+            const API_BASE_URL = "https://aretrace--nailedit-app-v0-api-service.modal.run";
+
+            // Bucket names
+            const TEXT_SEARCH_BUCKET_NAME = "pretty-images";
+            const IMAGE_SEARCH_BUCKET_NAME = "salon-images-alex"; // Assuming this is the bucket for image search
+
+            // Image base URLs
+            const TEXT_SEARCH_IMAGES_BASE_URL = `https://${TEXT_SEARCH_BUCKET_NAME}.s3.us-west-1.amazonaws.com/`;
+            const IMAGE_SEARCH_IMAGES_BASE_URL = `https://${IMAGE_SEARCH_BUCKET_NAME}.s3.us-west-1.amazonaws.com/`;
+
+            // API key header name
+            const API_KEY_HEADER = "X-API-Key";
+
+            // Your API key
+            const API_KEY = "ni-7DYK2QV5jSA2BYq5N0XfpA3W";
+
+            // Default number of results to display
+            const DEFAULT_AMOUNT = 5;
+
+            /**
+             * =========================
+             * HELPER FUNCTIONS
+             * =========================
+             */
+
+            /**
+             * Displays an array of image results (strings or objects) in the image container.
+             * @param {Array<string|object>} results - An array of image results (IDs as strings or objects like {id: "...", salon_id: "..."}).
+             * @param {string} imagesBaseUrl - The base URL for the images.
+             */
+            function displayImages(results, imagesBaseUrl) {
+                const container = document.getElementById("imageContainer");
+                container.innerHTML = ""; // Clear previous results
+
+                if (!Array.isArray(results) || results.length === 0) {
+                    container.textContent = "No images found.";
+                    return;
+                }
+
+                results.forEach((resultItem) => {
+                    let imageId;
+                    let salonId = null; // Optional salon ID
+
+                    // Check if the item is an object with an 'id' property
+                    if (typeof resultItem === "object" && resultItem !== null && resultItem.id) {
+                        imageId = resultItem.id;
+                        salonId = resultItem.salon_id; // Capture salon_id if available
+                    } else if (typeof resultItem === "string") {
+                        // Item is already the image ID string
+                        imageId = resultItem;
+                    } else {
+                        // Skip invalid items or log an error
+                        console.warn("Skipping invalid item in results:", resultItem);
+                        return; // Continue to the next item in the loop
+                    }
+
+                    if (!imageId) {
+                        console.warn("Skipping item with missing ID:", resultItem);
+                        return;
+                    }
+
+                    const img = document.createElement("img");
+                    img.src = `${imagesBaseUrl}${imageId}`;
+                    img.alt = `Image result ${imageId}` + (salonId ? ` (Salon: ${salonId})` : "");
+                    img.title = `Image ID: ${imageId}` + (salonId ? `\nSalon ID: ${salonId}` : ""); // Add title for hover info
+                    // On click, search for similar images using the *source* URL of the clicked image
+                    img.onclick = () => searchBySimilarImage(img.src);
+                    container.appendChild(img);
+                });
+            }
+
+            /**
+             * Handles API errors by displaying an error message.
+             * @param {Error} error - The error object.
+             * @param {Response} [response=null] - Optional fetch Response object for more context.
+             */
+            async function handleApiError(error, response = null) {
+                console.error("API error:", error);
+                let errorMessage = "An error occurred while processing your request.";
+
+                if (response) {
+                    try {
+                        // Attempt to parse detailed error from API response body
+                        const errorData = await response.json();
+                        if (errorData && errorData.error && errorData.error.message) {
+                            errorMessage = `Error ${response.status}: ${errorData.error.message}`;
+                        } else {
+                            errorMessage = `API error: ${response.status} ${response.statusText}`;
+                        }
+                    } catch (parseError) {
+                        // Fallback if parsing response fails
+                        errorMessage = `API error: ${response.status} ${response.statusText}. Could not parse error details.`;
+                        console.error("Could not parse error response body:", parseError);
+                    }
+                } else if (error.message) {
+                    // Use error message if no response object is available (e.g., network error)
+                    errorMessage = error.message;
+                }
+
+                const container = document.getElementById("imageContainer");
+                container.textContent = errorMessage;
+            }
+
+            /**
+             * Fetches the image blob from a given URL. Handles potential CORS issues.
+             * @param {string} imageUrl - The URL of the image to fetch.
+             * @returns {Promise<Blob>} - A promise that resolves to the image blob.
+             */
+            async function fetchImageBlob(imageUrl) {
+                try {
+                    // Attempt direct fetch first (might work if CORS is configured on S3 or if same-origin)
+                    const response = await fetch(imageUrl);
+                    if (!response.ok) {
+                        // If direct fetch fails (e.g., CORS), try fetching via a proxy or backend if available
+                        // For this demo, we'll assume direct fetch might fail due to CORS and throw
+                        throw new Error(
+                            `Image fetch error: ${response.status} ${response.statusText}. CORS might be blocking direct access.`,
+                        );
+                    }
+                    return await response.blob();
+                } catch (error) {
+                    console.error("Error fetching image blob:", error);
+                    // Re-throw or handle differently (e.g., inform user, use placeholder)
+                    // For simplicity, we re-throw here. In a real app, you might need a CORS proxy.
+                    throw new Error(
+                        `Failed to fetch image blob from ${imageUrl}. Check CORS policy or network connection.`,
+                    );
+                }
+            }
+
+            /**
+             * =========================
+             * MAIN FUNCTIONS
+             * =========================
+             */
+
+            /**
+             * Performs a text-to-image search using the user's query.
+             * Fetches image results from the API and displays them.
+             */
+            async function searchByText() {
+                const container = document.getElementById("imageContainer");
+                container.textContent = "Loading...";
+                let response = null; // Keep track of the response object
+
+                try {
+                    // Retrieve user inputs
+                    const query = document.getElementById("queryInput").value.trim();
+                    if (!query) {
+                        alert("Please enter a search query.");
+                        container.textContent = "";
+                        return;
+                    }
+                    const amount = Math.max(
+                        1,
+                        parseInt(document.getElementById("textSearchAmount").value) || DEFAULT_AMOUNT,
+                    );
+
+                    // Construct the endpoint URL
+                    const endpoint = `${API_BASE_URL}/buckets/${TEXT_SEARCH_BUCKET_NAME}/search?query=${encodeURIComponent(query)}&amount=${amount}`;
+
+                    // Set up headers including the API key
+                    const headers = {
+                        Accept: "application/json",
+                        [API_KEY_HEADER]: API_KEY,
+                    };
+
+                    // Make the GET request to the text search endpoint
+                    response = await fetch(endpoint, {
+                        headers,
+                        mode: "cors", // Necessary for cross-origin requests
+                        cache: "no-cache",
+                    });
+
+                    const data = await response.json(); // Attempt to parse JSON regardless of status
+
+                    if (!response.ok) {
+                        // Throw an error to be caught by the catch block, passing the response
+                        throw new Error(`API error ${response.status}`);
+                    }
+
+                    // Display the images using the returned results (can be strings or objects)
+                    // API returns { data: { results: [...] } }
+                    if (data.data && data.data.results) {
+                        displayImages(data.data.results, TEXT_SEARCH_IMAGES_BASE_URL);
+                    } else {
+                        // Handle cases where data.data or data.data.results is missing/null
+                        console.warn("API response missing expected data structure:", data);
+                        container.textContent = "No images found or invalid API response.";
+                    }
+                } catch (error) {
+                    // Pass both error and response to the handler
+                    handleApiError(error, response);
+                }
+            }
+
+            /**
+             * Performs an image-to-image search using the clicked image URL.
+             * Fetches similar image results from the API and displays them.
+             * @param {string} imageUrl - The URL of the image to find similar images for.
+             */
+            async function searchBySimilarImage(imageUrl) {
+                const container = document.getElementById("imageContainer");
+                container.textContent = "Finding similar images...";
+                let response = null; // Keep track of the response object
+
+                try {
+                    const amount = Math.max(
+                        1,
+                        parseInt(document.getElementById("similarSearchAmount").value) ||
+                            DEFAULT_AMOUNT,
+                    );
+
+                    // Construct the endpoint URL
+                    const endpoint = `${API_BASE_URL}/buckets/${IMAGE_SEARCH_BUCKET_NAME}/search?amount=${amount}`;
+
+                    // Set up headers including the API key
+                    const headers = {
+                        // Content-Type is set automatically by FormData
+                        [API_KEY_HEADER]: API_KEY,
+                        Accept: "application/json", // Expect JSON response
+                    };
+
+                    // Fetch the image blob from its URL
+                    const imageBlob = await fetchImageBlob(imageUrl);
+
+                    // Extract original filename if possible, otherwise use a default
+                    const urlParts = imageUrl.split("/");
+                    const filename = urlParts[urlParts.length - 1] || "image.jpg"; // Basic filename extraction
+
+                    // Create a FormData object and append the image file
+                    const formData = new FormData();
+                    // Use the fetched blob and try to preserve its type, provide filename
+                    const imageFile = new File([imageBlob], filename, {
+                        type: imageBlob.type || "image/jpeg",
+                    });
+                    formData.append("file", imageFile);
+
+                    // Make the POST request to the image search endpoint
+                    response = await fetch(endpoint, {
+                        method: "POST",
+                        headers,
+                        body: formData,
+                        mode: "cors", // Necessary for cross-origin requests
+                    });
+
+                    const data = await response.json(); // Attempt to parse JSON
+
+                    if (!response.ok) {
+                        // Throw an error to be caught, passing the response
+                        throw new Error(`API error ${response.status}`);
+                    }
+
+                    // Display the similar images using the returned results
+                    // API returns { data: { results: [...] } }
+                    if (data.data && data.data.results) {
+                        // Use the base URL corresponding to the bucket we *searched* in
+                        displayImages(data.data.results, IMAGE_SEARCH_IMAGES_BASE_URL);
+                    } else {
+                        console.warn("API response missing expected data structure:", data);
+                        container.textContent = "No similar images found or invalid API response.";
+                    }
+                } catch (error) {
+                    // Pass both error and response (if available) to the handler
+                    handleApiError(error, response);
+                }
+            }
+
+            // Attach event handler to the search button
+            document.getElementById("fetchImagesBtn").onclick = searchByText;
+
+            // Optional: Add event listener for Enter key in text input
+            document.getElementById("queryInput").addEventListener("keypress", function (event) {
+                if (event.key === "Enter") {
+                    event.preventDefault(); // Prevent default form submission if wrapped in form
+                    searchByText();
+                }
+            });
+        </script>
+    </body>
+</html>
