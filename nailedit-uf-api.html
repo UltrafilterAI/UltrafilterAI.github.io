@@ -16,39 +16,51 @@
                 display: inline-block;
                 width: 150px;
                 margin-right: 10px;
-                vertical-align: middle; /* Align labels nicely with inputs */
+                vertical-align: middle;
             }
             input[type="text"],
             input[type="number"],
             input[type="url"] {
-                width: 300px; /* Give text/url inputs more space */
+                width: 300px;
                 padding: 5px;
                 margin-bottom: 10px;
                 vertical-align: middle;
             }
             input[type="number"] {
-                width: 60px; /* Smaller width for number inputs */
+                width: 60px;
             }
             button {
                 margin-bottom: 10px;
                 padding: 6px 12px;
                 vertical-align: middle;
             }
+            #imageContainer .image-wrapper {
+                display: inline-block; /* Keep image and info together */
+                vertical-align: top;
+                margin: 10px;
+            }
             #imageContainer img {
                 max-width: 200px;
-                margin: 10px;
+                display: block; /* Ensure info div is below */
                 cursor: pointer;
-                border: 1px solid #ccc; /* Add a subtle border */
-                vertical-align: top; /* Align images nicely if they wrap */
+                border: 1px solid #ccc;
+            }
+            #imageContainer .image-info {
+                font-size: 0.8em;
+                color: #555;
+                text-align: center;
+                max-width: 200px; /* Match image width */
+                margin-top: 4px; /* Space between image and text */
+                word-wrap: break-word;
             }
             #imageContainer {
                 margin-top: 20px;
                 padding-top: 10px;
                 border-top: 1px solid #eee;
-                min-height: 50px; /* Ensure space even when loading/empty */
+                min-height: 50px;
                 display: flex;
                 flex-wrap: wrap;
-                align-items: flex-start; /* Align wrapped items to the top */
+                align-items: flex-start;
             }
             .config-section,
             .search-section {
@@ -85,7 +97,6 @@
                     placeholder="Enter your API Key"
                     style="width: 300px"
                 />
-                <!-- Note: Exposing API keys client-side is insecure for production environments -->
             </div>
         </div>
 
@@ -119,7 +130,6 @@
             </div>
         </div>
 
-        <!-- Results container -->
         <h2>Results</h2>
         <div id="imageContainer"></div>
 
@@ -139,7 +149,6 @@
             const similarSearchAmountInput = document.getElementById("similarSearchAmount");
             const imageContainer = document.getElementById("imageContainer");
 
-            // Constants
             const API_KEY_HEADER = "X-API-Key";
             const DEFAULT_AMOUNT = 5;
 
@@ -151,20 +160,18 @@
 
             /**
              * Constructs the S3 base URL for images within a given bucket.
-             * Assumes a standard S3 URL format. Modify if needed.
              * @param {string} bucketName - The name of the S3 bucket.
              * @param {string} [region='us-west-1'] - The AWS region of the bucket.
              * @returns {string} The base URL for images in the bucket (without trailing slash).
              */
             function getImagesBaseUrl(bucketName, region = "us-west-1") {
                 if (!bucketName) return "";
-                // Handle potential dualstack endpoint needs if necessary
                 return `https://${bucketName}.s3.${region}.amazonaws.com`;
             }
 
             /**
-             * Displays an array of image results (strings or objects) in the image container.
-             * @param {Array<string|object>} results - An array of image results (IDs as strings or objects like {id: "...", salon_id: "..."}).
+             * Displays an array of image result objects in the image container.
+             * @param {Array<object>} results - An array of image result objects like {id: "...", salon_id: "..." | null}.
              * @param {string} imagesBaseUrl - The base URL for the images (without trailing slash).
              * @param {string} targetBucketForSimilarSearch - The bucket name to use when searching for similar images based on clicks here.
              */
@@ -182,39 +189,38 @@
                 }
 
                 results.forEach((resultItem) => {
-                    let imageId;
-                    let salonId = null; // Optional salon ID
-
-                    // Check if the item is an object with an 'id' property
-                    if (typeof resultItem === "object" && resultItem !== null && resultItem.id) {
-                        imageId = resultItem.id;
-                        salonId = resultItem.salon_id; // Capture salon_id if available
-                    } else if (typeof resultItem === "string") {
-                        // Item is already the image ID string
-                        imageId = resultItem;
-                    } else {
-                        // Skip invalid items or log an error
+                    // Expect resultItem to be an object like { id: "...", salon_id: "..." | null }
+                    if (typeof resultItem !== "object" || resultItem === null || !resultItem.id) {
                         console.warn("Skipping invalid item in results:", resultItem);
                         return; // Continue to the next item in the loop
                     }
 
-                    if (!imageId) {
-                        console.warn("Skipping item with missing ID:", resultItem);
-                        return;
-                    }
+                    const imageId = resultItem.id;
+                    const salonId = resultItem.salon_id; // Will be null if not present
+
+                    const wrapper = document.createElement("div");
+                    wrapper.classList.add("image-wrapper");
 
                     const img = document.createElement("img");
-                    // Construct image URL, adding the slash
                     img.src = `${imagesBaseUrl}/${imageId}`;
                     img.alt = `Image result ${imageId}` + (salonId ? ` (Salon: ${salonId})` : "");
                     img.title =
                         `Click to find similar images\nImage ID: ${imageId}` +
-                        (salonId ? `\nSalon ID: ${salonId}` : ""); // Add title for hover info
+                        (salonId ? `\nSalon ID: ${salonId}` : "");
 
-                    // On click, search for similar images using the *source* URL of the clicked image
-                    // Pass the target bucket for the *next* search
                     img.onclick = () => searchBySimilarImage(img.src, targetBucketForSimilarSearch);
-                    imageContainer.appendChild(img);
+
+                    const infoDiv = document.createElement("div");
+                    infoDiv.classList.add("image-info");
+                    // Display ID and Salon ID (if available) below the image
+                    infoDiv.textContent = `ID: ${imageId}`;
+                    if (salonId) {
+                        infoDiv.textContent += ` | Salon: ${salonId}`;
+                    }
+
+                    wrapper.appendChild(img);
+                    wrapper.appendChild(infoDiv);
+                    imageContainer.appendChild(wrapper);
                 });
             }
 
@@ -229,42 +235,41 @@
 
                 if (response) {
                     try {
-                        // Attempt to parse detailed error from API response body
                         const errorData = await response.json();
-                        if (errorData && errorData.error && errorData.error.message) {
+                        // Parse the expected error format: { "error": { "message": "..." } }
+                        if (errorData?.error?.message) {
                             errorMessage = `Error ${response.status}: ${errorData.error.message}`;
-                        } else if (errorData && typeof errorData === "object" && errorData.detail) {
-                            // Handle FastAPI validation errors etc.
+                        } else if (errorData?.detail) {
+                            // Handle FastAPI validation errors
                             errorMessage = `Error ${response.status}: ${JSON.stringify(errorData.detail)}`;
                         } else {
-                            errorMessage = `API error: ${response.status} ${response.statusText || ""}`;
+                            // Fallback for unexpected structure
+                            errorMessage = `API error: ${response.status} ${response.statusText || ""}. Response body: ${JSON.stringify(errorData)}`;
                         }
                     } catch (parseError) {
-                        // Fallback if parsing response fails
+                        // Fallback if parsing response body fails
                         errorMessage = `API error: ${response.status} ${response.statusText || ""}. Could not parse error details.`;
                         console.error("Could not parse error response body:", parseError);
                     }
                 } else if (error.message) {
-                    // Use error message if no response object is available (e.g., network error)
+                    // Network errors or errors before fetch response
                     errorMessage = error.message;
                 }
 
                 imageContainer.textContent = `Error: ${errorMessage}`;
-                imageContainer.style.color = "red"; // Make errors visible
+                imageContainer.style.color = "red";
             }
 
             /**
-             * Fetches the image blob from a given URL. Handles potential CORS issues by trying fetch directly.
+             * Fetches the image blob from a given URL.
              * @param {string} imageUrl - The URL of the image to fetch.
              * @returns {Promise<Blob>} - A promise that resolves to the image blob.
              */
             async function fetchImageBlob(imageUrl) {
                 try {
-                    // Attempt direct fetch. Requires S3 bucket to have permissive CORS settings
-                    // for GET requests from the origin this HTML is served from.
+                    // Assumes S3 bucket has permissive CORS settings for GET requests from this origin
                     const response = await fetch(imageUrl);
                     if (!response.ok) {
-                        // If direct fetch fails, throw an error explaining potential CORS issue
                         throw new Error(
                             `Image fetch failed: ${response.status} ${response.statusText}. Check browser console and S3 bucket CORS configuration for ${new URL(imageUrl).origin}.`,
                         );
@@ -272,7 +277,6 @@
                     return await response.blob();
                 } catch (error) {
                     console.error("Error fetching image blob:", error);
-                    // Re-throw for handling in the calling function
                     // A production app might need a server-side proxy to bypass CORS if S3 cannot be configured.
                     throw new Error(`Failed to fetch image blob from ${imageUrl}. ${error.message}`);
                 }
@@ -291,7 +295,6 @@
                     apiBaseUrlInput.focus();
                     return null;
                 }
-                // Basic URL validation (doesn't guarantee correctness but catches obvious errors)
                 try {
                     new URL(apiBaseUrl);
                 } catch (_) {
@@ -315,24 +318,22 @@
              */
 
             /**
-             * Performs a text-to-image search using the user's query.
-             * Fetches image results from the API and displays them.
+             * Performs a text-to-image search.
              */
             async function searchByText() {
                 imageContainer.textContent = "Loading...";
-                imageContainer.style.color = "inherit"; // Reset color
+                imageContainer.style.color = "inherit";
 
                 const commonConfig = getCommonConfig();
                 if (!commonConfig) {
-                    imageContainer.textContent = ""; // Clear loading message
+                    imageContainer.textContent = "";
                     return;
                 }
                 const { apiKey, apiBaseUrl } = commonConfig;
 
-                let response = null; // Keep track of the response object
+                let response = null;
 
                 try {
-                    // Retrieve user inputs for this search type
                     const bucketName = textSearchBucketInput.value.trim();
                     const query = queryInput.value.trim();
 
@@ -353,62 +354,53 @@
                         parseInt(textSearchAmountInput.value) || DEFAULT_AMOUNT,
                     );
 
-                    // Construct the endpoint URL - adding slashes explicitly
                     const endpoint = `${apiBaseUrl}/buckets/${bucketName}/search?query=${encodeURIComponent(query)}&amount=${amount}`;
-
-                    // Set up headers including the API key
                     const headers = {
                         Accept: "application/json",
                         [API_KEY_HEADER]: apiKey,
                     };
 
-                    // Make the GET request to the text search endpoint
                     response = await fetch(endpoint, {
                         headers,
-                        mode: "cors", // Necessary for cross-origin requests
+                        mode: "cors",
                         cache: "no-cache",
                     });
 
-                    const data = await response.json(); // Attempt to parse JSON regardless of status
+                    const data = await response.json();
 
                     if (!response.ok) {
-                        // Throw an error to be caught by the catch block, passing the response
+                        // Let handleApiError parse details from 'data'
                         throw new Error(`API error ${response.status}`);
                     }
 
-                    // Determine the base URL for the images returned by *this* search
                     const imagesBaseUrl = getImagesBaseUrl(bucketName);
-                    // Determine the target bucket for *subsequent* similar image searches
                     const targetBucketForSimilarSearch = imageSearchBucketInput.value.trim();
 
-                    // Display the images using the returned results (can be strings or objects)
-                    // API returns { data: { results: [...] } }
-                    if (data.data && data.data.results) {
+                    // Access results via data.data.results (expecting array of objects)
+                    if (data?.data?.results && Array.isArray(data.data.results)) {
                         displayImages(data.data.results, imagesBaseUrl, targetBucketForSimilarSearch);
                     } else {
-                        // Handle cases where data.data or data.data.results is missing/null
                         console.warn("API response missing expected data structure:", data);
-                        imageContainer.textContent = "No images found or invalid API response.";
+                        imageContainer.textContent =
+                            "No images found or invalid API response structure.";
                     }
                 } catch (error) {
-                    // Pass both error and response to the handler
                     handleApiError(error, response);
                 }
             }
 
             /**
-             * Performs an image-to-image search using the clicked image URL.
-             * Fetches similar image results from the API and displays them.
+             * Performs an image-to-image search using a clicked image URL.
              * @param {string} imageUrl - The URL of the image to find similar images for.
              * @param {string} searchBucketName - The name of the bucket to search within for similar images.
              */
             async function searchBySimilarImage(imageUrl, searchBucketName) {
                 imageContainer.textContent = "Finding similar images...";
-                imageContainer.style.color = "inherit"; // Reset color
+                imageContainer.style.color = "inherit";
 
                 const commonConfig = getCommonConfig();
                 if (!commonConfig) {
-                    imageContainer.textContent = ""; // Clear loading message
+                    imageContainer.textContent = "";
                     return;
                 }
                 const { apiKey, apiBaseUrl } = commonConfig;
@@ -420,7 +412,7 @@
                     return;
                 }
 
-                let response = null; // Keep track of the response object
+                let response = null;
 
                 try {
                     const amount = Math.max(
@@ -428,21 +420,15 @@
                         parseInt(similarSearchAmountInput.value) || DEFAULT_AMOUNT,
                     );
 
-                    // Construct the endpoint URL - adding slashes explicitly
                     const endpoint = `${apiBaseUrl}/buckets/${searchBucketName}/search?amount=${amount}`;
-
-                    // Set up headers including the API key
                     const headers = {
-                        // Content-Type is set automatically by FormData when sending files
                         [API_KEY_HEADER]: apiKey,
-                        Accept: "application/json", // Expect JSON response
+                        Accept: "application/json",
                     };
 
-                    // Fetch the image blob from its URL
                     const imageBlob = await fetchImageBlob(imageUrl);
 
-                    // Extract original filename if possible, otherwise use a default
-                    let filename = "image.jpg"; // Default
+                    let filename = "image.jpg"; // Default filename
                     try {
                         const urlPath = new URL(imageUrl).pathname;
                         const urlParts = urlPath.split("/");
@@ -453,47 +439,39 @@
                         console.warn("Could not parse filename from image URL", imageUrl, e);
                     }
 
-                    // Create a FormData object and append the image file
                     const formData = new FormData();
-                    // Use the fetched blob and try to preserve its type, provide filename
                     const imageFile = new File([imageBlob], filename, {
-                        type: imageBlob.type || "image/jpeg", // Provide a default type if blob doesn't have one
+                        type: imageBlob.type || "image/jpeg",
                     });
                     formData.append("file", imageFile);
 
-                    // Make the POST request to the image search endpoint
                     response = await fetch(endpoint, {
                         method: "POST",
                         headers,
                         body: formData,
-                        mode: "cors", // Necessary for cross-origin requests
+                        mode: "cors",
                     });
 
-                    const data = await response.json(); // Attempt to parse JSON
+                    const data = await response.json();
 
                     if (!response.ok) {
-                        // Throw an error to be caught, passing the response
+                        // Let handleApiError parse details from 'data'
                         throw new Error(`API error ${response.status}`);
                     }
 
-                    // Determine the base URL for the images returned by *this* search
                     // Results come from the bucket we just searched
                     const imagesBaseUrl = getImagesBaseUrl(searchBucketName);
-                    // The target bucket for the *next* similar search remains the same
                     const targetBucketForSimilarSearch = searchBucketName;
 
-                    // Display the similar images using the returned results
-                    // API returns { data: { results: [...] } }
-                    if (data.data && data.data.results) {
-                        // Use the base URL corresponding to the bucket we *searched* in
+                    // Access results via data.data.results (expecting array of objects)
+                    if (data?.data?.results && Array.isArray(data.data.results)) {
                         displayImages(data.data.results, imagesBaseUrl, targetBucketForSimilarSearch);
                     } else {
                         console.warn("API response missing expected data structure:", data);
                         imageContainer.textContent =
-                            "No similar images found or invalid API response.";
+                            "No similar images found or invalid API response structure.";
                     }
                 } catch (error) {
-                    // Pass both error and response (if available) to the handler
                     handleApiError(error, response);
                 }
             }
@@ -501,10 +479,10 @@
             // Attach event handler to the search button
             fetchImagesBtn.onclick = searchByText;
 
-            // Optional: Add event listener for Enter key in text input
+            // Add event listener for Enter key in text input
             queryInput.addEventListener("keypress", function (event) {
                 if (event.key === "Enter") {
-                    event.preventDefault(); // Prevent default form submission if wrapped in form
+                    event.preventDefault();
                     searchByText();
                 }
             });
