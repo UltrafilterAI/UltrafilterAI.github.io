@@ -265,7 +265,7 @@
              * @param {string} imageUrl - The URL of the image to fetch.
              * @returns {Promise<Blob>} - A promise that resolves to the image blob.
              */
-            async function fetchImageBlob(imageUrl) {
+            async function fetchImageBlob(imageUrl, { mode: "cors", cache: "no-cache" }) {
                 try {
                     // Assumes S3 bucket has permissive CORS settings for GET requests from this origin
                     const response = await fetch(imageUrl);
